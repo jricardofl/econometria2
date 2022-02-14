@@ -1,0 +1,172 @@
+---
+title: "Econometria de Séries Temporais"
+author: "João Ricardo F. de Lima"
+output: 
+    html_document:
+        theme: flatly
+        number_sections: no
+        highlight: textmate
+        #includes: 
+        #  in_header: "header.html"
+        toc: yes
+        toc_float:
+          collapsed: yes
+          smooth_scroll: yes 
+---
+
+# ECONOMETRIA II
+
+<br>
+
+## 1. OBJETIVO
+
+<br>
+
+Este curso tem como objetivo principal o estudo de técnicas de análise e previsão de séries temporais. A abordagem é essencialmente aplicada combinada com a teoria necessária para o entendimento da natureza e características dos métodos estudados. 
+
+<br>
+
+## 2. AVALIAÇÃO
+
+<br>
+
+A avaliação do curso constará de provas e exercícios. As Provas cobrirão a matéria nova ministrada até a aula anterior à data da prova e deverão ser resolvidas na sala de aula sem consulta.  Haverá prova prática no computador e por isto os estudantes devem se dedicar a aprender bem como se usa o software estatístico. Os Exercícios constituir-se-ão de problemas demonstrativos, com a finalidade de esclarecer e fixar bem os conceitos desenvolvidos na sala de aula, além de problemas práticos que envolverão coleta de dados, estimação de modelos, com uso do computador, e interpretação dos resultados. Os Exercícios devem ser resolvidos e submetidos para correção. O software econométrico a ser utilizado no curso é o R.
+
+<br>
+
+## 3. BIBLIOGRAFIA
+
+<br>
+
+BUENO, R. De L. da S. *Econometria de séries temporais*. São Paulo: Cengage Learning, 2008. 299p.
+
+FERREIRA, P. G. C. (org.). *Análise de Séries Temporais em R: curso introdutório*. Rio de Janeiro: Elsevier, 2018. 249p.
+
+GUJARATI, D. N.; PORTER D.C. *Basic Econometrics*. 5th ed. NY: McGraw Hill, 2009. 922p.
+
+MORETTIN, P. A. *Econometria Financeira – Um curso em séries temporais financeiras.* São Paulo: Edgard Blücher, 2008. 319p.
+
+<br>
+
+## 4. TÓPICOS DO CURSO
+
+<br>
+
+### ANÁLISE DE ESTACIONARIEDADE 
+
+<br>
+
+1. Conceito de Estacionariedade 
+
+2. Função de Autocorrelação 
+
+3. Função de Autocorrelação Parcial
+
+4. Conceito de Raiz Unitária
+
+5. Conceito de Integração 
+
+6. Propriedades de Séries Integradas
+
+7. Testes de Raiz Unitária
+
+<br>
+
+### MODELOS UNIVARIADOS LINEARES DE SÉRIES TEMPORAIS 
+
+<br>
+
+1. Processo Aleatório Puro ou Ruido Branco (White Noise) 
+
+2. Passeio Aleatório (Random Walk) 
+
+3. Modelo Autorregressivo (AR) 
+
+4. Modelo de Média Móvel (MA) 
+
+5. Modelo Autorregressivo e de Média Móvel (ARMA) 
+
+6. Modelo Autorregressivo Integrado e de Média Móvel (ARIMA) 	 
+
+<br>
+
+### MODELAGEM DE SÉRIES TEMPORAIS UNIVARIADAS ESTACIONÁRIAS – METODOLOGIA DE BOX & JENKINS PARA MODELOS ARIMA
+
+<br>
+
+1. Identificação 
+
+2. Estimação 
+
+3. Verificação 
+
+4. Previsão  	 
+
+<br>
+
+### MODELOS DE VOLATILIDADE
+
+<br>
+
+1. Introdução – Modelagem de Variância 
+
+2. Modelos Univariados: 
+
+I) Modelo ARCH  
+	
+II) Modelo GARCH 
+	
+III) Modelo TARCH 	 
+
+<br>
+
+### MODELOS MULTIVARIADOS DE SÉRIES TEMPORAIS
+
+<br>
+
+1. Modelo de Auto-regressão Vetorial (modelo VAR) 
+
+2. Análises com VAR 
+
+I) Diagnóstico/Avaliação 
+	 
+II) Função Impulso Resposta 
+	 
+III) Decomposição da Variância do Erro de Previsão
+	 
+IV) Causalidade 
+   
+3. Análise de Co-integração 
+
+I) Conceito de Cointegração 
+	 
+II) Testes de Cointegração: Univariado e Multivariado
+	 
+III) Modelo de Correção de Erro (VEC)  
+
+<br>
+
+# [AULA 1](https://jricardofl.github.io/econometria2/econ2_aula1)
+
+<br>
+
+# [AULA 2](https://jricardofl.github.io/econometria2/econ2_aula2)
+
+<br>
+
+# AULA 3
+
+# AULA 4
+
+# AULA 5
+
+# AULA 6
+
+# AULA 7
+
+# AULA 8
+
+# AULA 9
+
+# AULA 10
+
