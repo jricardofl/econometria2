@@ -1,0 +1,291 @@
+---
+title: "Aula 3 - Econometria de Séries Temporais"
+author: "João Ricardo F. de Lima"
+date: "`r format(Sys.time(), '%d de %B de %Y.')`"
+output: 
+    html_document:
+        theme: flatly
+        number_sections: yes
+        highlight: textmate
+#        includes: 
+#          in_header: "header.html"
+        toc: yes
+        toc_float:
+          collapsed: yes
+          smooth_scroll: yes 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 10, 
+  fig.height = 7,
+  fig.align  = "center",
+  comment    = "#",
+  size       = "normalsize"
+  )
+
+#Linhas precisam de ajuste semanal: 30, 104, 201, 204
+```
+
+# Análise da Sazonalidade
+
+<br>
+
+**Variações sazonais** são movimentos cíclicos que se completam no período de um ano e se reproduzem nos outros anos com certa regularidade. Em outras palavras, *sazonalidade* significa dizer que em determinados meses os valores estão sistematicamente acima ou abaixo de um valor médio da série.
+
+Se isola o componente sazonal da série temporal por dois motivos: 
+
+a) remover o componente sazonal para estudar os outros componentes; ou 
+
+b) identificar o componente sazonal que expressam a intensidade da sazonalidade a cada período.
+
+A interdependência temporal na série, então, ocorre de duas maneiras: 
+
+a) correlação entre as observações para meses sucessivos em dado ano, isto é, $Y_t$ relacionado com $Y_{t-1}, Y_{t-2}, Y_{t-3}$, etc; 
+
+b) correlação entre as observações para o mesmo mês em anos sucessivos, ou seja, $Y_t$ relacionado com $Y_{t-s}, Y_{t-2s}, Y_{t-3s}$ em que "s" é o período sazonal considerado.
+
+Considere uma série temporal de preços da melancia. Em janeiro de 2014, por exemplo, é relacionado com o preço de dezembro de 2013, de novembro de 2013, de outubro de 2013, além de janeiro de 2013, janeiro de 2012, janeiro de 2011, etc.. O mesmo ocorreria com qualquer outra série histórica macroeconômica; 
+Séries sazonais apresentam correlações altas nos *lags sazonais*, que são os lags múltiplos de "s".
+
+
+# Sazonalidade Determinística
+
+A *sazonalidade* pode ser de natureza **determinística** ou **estocástica**. A sazonalidade determinística é aquela que tem um padrão previsível a partir de meses anteriores e normalmente está relacionada com a influência de fenomenos climáticos ou datas específicas que se repetem ano a ano.
+
+Pode ser analisada por meio de regressão ou médias móveis.
+
+## Sazonalidade - Regressão
+
+A sazonalidade determinística pode ser analisada pelo **método de regressão** com o uso de *dummies*. Considere: 
+
+$$
+Y_t=T_t+S_t+\epsilon_t
+$$
+
+em que a tendência é dada por por $T_t=\sum_{j=0}^{k}\beta_jt^j$;
+
+Se a sazonalidade é determinística, o padrão sazonal não varia a cada ano e pode ser representado por 12 dummies sazonais $S_t=\sum_{j=1}^{12}\alpha_jd_{jt}$
+
+Cada série de dummy sazonal da variável "y" pode ser facilmente gerada no R pelo comando ``dseas1 <- seasonaldummy(y) ``. Se a restrição $\sum_{j=i}^{12}d_j=0$ for usada, $\alpha_j$ representa o efeito sazonal do período "s" comparado com uma linha de tendencia média.
+	
+Estima-se o seguinte modelo:
+
+$$
+Y_t=\sum_{j=0}^{k}\beta_jt^j+\sum_{j=1}^{11}\alpha_jD_{jt}+\epsilon_t
+$$
+
+os coeficientes $\alpha_1, \alpha_2, \dots, \alpha_12$ são as constantes sazonais. 
+
+Dado que $\sum_{j=i}^{12}d_j=0$, $\alpha_{12}=-(\alpha_1+\alpha_2+ \dots+ \alpha_{11})$
+
+<br>
+
+## Exemplo Sazonalidade Determinística por regressão no R
+
+<br>
+
+``` {r econ1, warning=FALSE, message=FALSE}
+#Direcionando o R para o Diretorio a ser trabalhado
+setwd('C:/Users/Joao Ricardo Lima/Dropbox/tempecon/facape/econometria2')
+
+#Limpa o Ambiente Global
+rm(list=ls())
+
+#Inicio do Script
+#Pacotes a serem utilizados 
+library(foreign)
+library(mFilter)
+library(forecast)
+library(dplyr)
+library(tsutils)
+library(ggplot2)
+
+#Entrando com os dados
+melancia <- read.dta("melancia1.dta")
+melancia <- melancia[,-c(1:6)] #deixar apenas a ultima coluna
+
+#Setando como série temporal
+melancia <- ts(melancia, start=c(2003,01), freq=12)
+
+#Grafico da evolucao do preco da Melancia
+plot(melancia, main='Preco Melancia Deflacionado',
+     xlab='(meses)', ylab='Reais (R$)', lwd=3)
+```
+
+``` {r econ2, warning=FALSE, message=FALSE}
+#Usando apenas uma parte dos dados
+melancia1 <- window(melancia, start=c(2005,1))
+
+#Grafico da evolucao do preco da melancia
+plot(melancia1, main='Preco Melancia Deflacionado',
+     xlab='(meses)', ylab='Reais (R$)', lwd=3)
+
+```
+
+<br>
+
+``` {r econ3, warning=FALSE, message=FALSE}
+#Geracao da variavel tendencia
+trend <- 1:length(melancia1)
+
+#Geracao das variaveis Dummy Sazonais
+dseas1 <- seasonaldummy(melancia1)
+for(i in c(12, 24, 36, 48, 60, 72, 84, 96, 108)) {
+  dseas1[i,] <- -1
+}
+
+regressao1 <- lm(melancia1 ~ trend + dseas1)
+summary(regressao1)
+
+```
+
+<br>
+
+### Gráfico dos coeficientes da regressão
+
+``` {r econ4, warning=FALSE, message=FALSE}
+
+# Organização dos Coeficientes da Regressão 
+
+coeffs <- coefficients(regressao1) #salva os coeficientes do modelo
+
+#Calculo do efeito sazonal para dezembro como sendo o 
+#negativo do somatorio dos outros meses
+
+dezembro <- as.data.frame(-(coeffs[3]+coeffs[4]+coeffs[5]+coeffs[6]+coeffs[7]+
+                              coeffs[8]+coeffs[9]+coeffs[10]+coeffs[11]
+                            +coeffs[12]+coeffs[13]))
+colnames(dezembro)[1] <- "coeffs"
+rownames(dezembro)[1] <- "Dezembro"
+
+#salva os coeficientes estimados em um data frame
+coeffs <- as.data.frame(coeffs) 
+rownames(coeffs) <- c("intercepto", "tendencia", "Janeiro", "Fevereiro", "Março",
+                      "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", 
+                      "Outubro", "Novembro")
+
+# adiciona uma linha no primeiro data frame, juntando dezembro
+# com os demais meses
+indices_sazonais <- bind_rows(coeffs, dezembro) 
+
+#retira as duas primeiras linhas
+indices_sazonais <- indices_sazonais %>% slice(-(1:2)) 
+
+#cria uma variável "meses"
+indices_sazonais$meses <- c("Janeiro", "Fevereiro", "Março",
+                      "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", 
+                      "Outubro", "Novembro", "Dezembro")
+
+#Transforma a variável em um factor para fazer o gráfico sem mudar
+#a ordem do eixo do x
+indices_sazonais$meses <- factor(indices_sazonais$meses, levels = indices_sazonais$meses)
+
+#Gráfico
+
+mycolor1 <- "blue" #escolhe a cor do gráfico
+
+ggplot(data=indices_sazonais, aes(x=meses, y=coeffs, fill="Indices Sazonais"))+
+  geom_col()+
+    scale_fill_manual(values=mycolor1)+
+    labs(y= "Índices Sazonais", x= "Meses", title='Analise de Sazonalidade Melancia por Regressão',
+       caption = "")+
+    theme_minimal()+ #Definindo tema
+    theme(axis.text.x=element_text(angle=0, hjust=0.5, size=8, margin = margin(b=20)),
+        axis.text.y=element_text(hjust=1, size=14, margin = margin(l=20)),
+        axis.title.x = element_text(size=14, face = "bold", margin = margin(b=20)),
+        axis.title.y = element_text(size=14, face = "bold", margin = margin(l=40)),
+        plot.title = element_text(hjust = 0.5, size=16, face="italic"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.caption = element_text(hjust = 0, size=12)) # Definindo posição da legenda
+
+```
+
+<br>
+
+### Gráfico da Série sem Sazonalidade e sem Tendência pelo método da regressão
+
+``` {r econ5, warning=FALSE, message=FALSE}
+#Série retirada a sazonalidade e tendencia
+melancia.saz <- ts(residuals(regressao1)+ mean(fitted(regressao1)), start=c(2005,1), freq=12)
+melancia1.saz <- ts(residuals(regressao1), start=c(2005,01), freq=12)
+
+#Gráficos
+plot(melancia1, main="Preço de Melancia, Preço de Melancia Sem Sazonalidade e Tendencia",
+     xlab='', ylab='% a.a.', lwd=3, ylim=c(-0.2, 0.7))
+lines(melancia1.saz, col='red', lwd=3)
+lines(melancia.saz, col='blue', lwd=3)
+legend('topleft', col=c('black','red', 'blue'), lty=c(1,1), lwd=c(2,2),
+       legend=c('Preço', 'Preço sem Sazonal', 'Preço sem Sazonal + Média'))
+```
+<br>
+
+## Sazonalidade - método das Médias Móveis 
+
+<br>
+
+Os resultados mais importantes que se obtém do ajustamento por média móvel são: 
+
+a) fatores sazonais que caracterizam o padrão de variação sazonal da série; 
+
+b) série dessazonalizada; 
+
+Uma série temporal pode ser decomposta nos seus componentes segundo o modelo aditivo ou multiplicativo. O modelo aditivo e a representação das variações sazonais e aleatórias são:
+
+$$
+Y=T+S+I, \qquad logo, \quad Y-T=S+I
+$$
+
+Para o modelo multiplicativo, 
+
+$$
+Y=TSI, \qquad logo, \quad \frac{Y}{T}=SI
+$$
+<br>
+
+### Sazonalidade - Médias Móveis no R
+
+<br>
+
+No R será usado o comando ``cmav`` do pacote ``tsutils`` para se encontrar a série suavizada pelo método de médias móveis e, depois, para retirar a sazonalidade da série.  
+
+É possível fazer o gráfico da série suavizada e da série dessazonalizada. 
+
+Com o uso do comando ``seasplot`` do pacote ``tsutils``, é gerado um gráfico dos fatores sazonais. 
+
+<br>
+
+``` {r econ6, warning=FALSE, message=FALSE}
+#Calculo da sazonalidade por media movel centralizada.
+cmav(melancia1, outplot=T)
+
+#Salvando os valores da sazonalidade em um objeto
+melancia.ma <- cmav(melancia1)
+```
+
+<br>
+
+``` {r econ7, warning=FALSE, message=FALSE}
+#Série sem sazonalidade por medias moveis
+melssazma <- melancia1 - melancia.ma
+
+#Gráficos
+plot(melancia1, main='Melancia, Melancia STS, Melancia SMA',
+     xlab='', ylab='% a.a.', lwd=3, ylim=c(-0.2, 0.7))
+lines(melancia1.saz, col='red', lwd=3)
+lines(melssazma, col='green', lwd=3)
+legend('topleft', col=c('black','red', 'green'), lty=c(1,1), lwd=c(2,2),
+       legend=c('Preço', 'Preço sem Sazonal Regressao', 'Preço sem Sazonal Media Movel'))
+```
+<br>
+
+## Analise da Sazonalidade com o seasplot
+
+``` {r econ8, warning=FALSE, message=FALSE}
+seasplot(melancia1, outplot = 5)
+```
+<br>
