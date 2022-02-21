@@ -30,6 +30,8 @@ knitr::opts_chunk$set(
 #Linhas precisam de ajuste semanal: 30, 104, 201, 204
 ```
 
+<br>
+
 # Análise da Sazonalidade
 
 <br>
@@ -51,20 +53,30 @@ b) correlação entre as observações para o mesmo mês em anos sucessivos, ou 
 Considere uma série temporal de preços da melancia. Em janeiro de 2014, por exemplo, é relacionado com o preço de dezembro de 2013, de novembro de 2013, de outubro de 2013, além de janeiro de 2013, janeiro de 2012, janeiro de 2011, etc.. O mesmo ocorreria com qualquer outra série histórica macroeconômica; 
 Séries sazonais apresentam correlações altas nos *lags sazonais*, que são os lags múltiplos de "s".
 
+<br>
 
 # Sazonalidade Determinística
+
+<br>
 
 A *sazonalidade* pode ser de natureza **determinística** ou **estocástica**. A sazonalidade determinística é aquela que tem um padrão previsível a partir de meses anteriores e normalmente está relacionada com a influência de fenomenos climáticos ou datas específicas que se repetem ano a ano.
 
 Pode ser analisada por meio de regressão ou médias móveis.
 
+<br>
+
 ## Sazonalidade - Regressão
 
+<br>
+
 A sazonalidade determinística pode ser analisada pelo **método de regressão** com o uso de *dummies*. Considere: 
+
+<br>
 
 $$
 Y_t=T_t+S_t+\epsilon_t
 $$
+<br>
 
 em que a tendência é dada por por $T_t=\sum_{j=0}^{k}\beta_jt^j$;
 
@@ -74,9 +86,12 @@ Cada série de dummy sazonal da variável "y" pode ser facilmente gerada no R pe
 	
 Estima-se o seguinte modelo:
 
+<br>
+
 $$
 Y_t=\sum_{j=0}^{k}\beta_jt^j+\sum_{j=1}^{11}\alpha_jD_{jt}+\epsilon_t
 $$
+<br>
 
 os coeficientes $\alpha_1, \alpha_2, \dots, \alpha_12$ são as constantes sazonais. 
 
@@ -115,6 +130,7 @@ melancia <- ts(melancia, start=c(2003,01), freq=12)
 plot(melancia, main='Preco Melancia Deflacionado',
      xlab='(meses)', ylab='Reais (R$)', lwd=3)
 ```
+<br>
 
 ``` {r econ2, warning=FALSE, message=FALSE}
 #Usando apenas uma parte dos dados
@@ -146,6 +162,8 @@ summary(regressao1)
 <br>
 
 ### Gráfico dos coeficientes da regressão
+
+<br>
 
 ``` {r econ4, warning=FALSE, message=FALSE}
 
@@ -209,6 +227,8 @@ ggplot(data=indices_sazonais, aes(x=meses, y=coeffs, fill="Indices Sazonais"))+
 
 ### Gráfico da Série sem Sazonalidade e sem Tendência pelo método da regressão
 
+<br>
+
 ``` {r econ5, warning=FALSE, message=FALSE}
 #Série retirada a sazonalidade e tendencia
 melancia.saz <- ts(residuals(regressao1)+ mean(fitted(regressao1)), start=c(2005,1), freq=12)
@@ -222,6 +242,7 @@ lines(melancia.saz, col='blue', lwd=3)
 legend('topleft', col=c('black','red', 'blue'), lty=c(1,1), lwd=c(2,2),
        legend=c('Preço', 'Preço sem Sazonal', 'Preço sem Sazonal + Média'))
 ```
+
 <br>
 
 ## Sazonalidade - método das Médias Móveis 
@@ -236,11 +257,16 @@ b) série dessazonalizada;
 
 Uma série temporal pode ser decomposta nos seus componentes segundo o modelo aditivo ou multiplicativo. O modelo aditivo e a representação das variações sazonais e aleatórias são:
 
+<br>
+
 $$
 Y=T+S+I, \qquad logo, \quad Y-T=S+I
 $$
+<br>
 
 Para o modelo multiplicativo, 
+
+<br>
 
 $$
 Y=TSI, \qquad logo, \quad \frac{Y}{T}=SI
@@ -285,7 +311,8 @@ legend('topleft', col=c('black','red', 'green'), lty=c(1,1), lwd=c(2,2),
 
 ## Analise da Sazonalidade com o seasplot
 
+<br>
+
 ``` {r econ8, warning=FALSE, message=FALSE}
 seasplot(melancia1, outplot = 5)
 ```
-<br>
