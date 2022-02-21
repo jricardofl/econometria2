@@ -1,0 +1,459 @@
+---
+title: "Aula 4 - Econometria de Séries Temporais"
+author: "João Ricardo F. de Lima"
+date: "`r format(Sys.time(), '%d de %B de %Y.')`"
+output: 
+    html_document:
+        theme: flatly
+        number_sections: yes
+        highlight: textmate
+#        includes: 
+#          in_header: "header.html"
+        toc: yes
+        toc_float:
+          collapsed: yes
+          smooth_scroll: yes 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 10, 
+  fig.height = 7,
+  fig.align  = "center",
+  comment    = "#",
+  size       = "normalsize"
+  )
+
+#Linhas precisam de ajuste semanal: 30, 104, 201, 204
+```
+
+<br>
+
+# Modelos Básicos de Séries Temporais
+
+<br>
+
+## Ruído Branco 
+
+<br>
+
+Uma série $Y_t$ é um ruído branco se 
+
+$$
+Y_t=\epsilon_t \qquad e \qquad \epsilon_t \thicksim iid(0,\sigma^2_\epsilon)
+$$
+
+ou seja, $Y_t$ é igual a uma variável aleatória $\epsilon_t$ independente (não autocorrelacionada) e igualmente distribuída (em todo o período de tempo t) com média zero e variância constante;
+
+<br>
+
+## Passeio Aleatório 
+
+<br>
+
+Uma série $Y_t$ é um Passeio Aleatório se 
+
+$$
+Y_t=Y_{t-1}+\epsilon_t 
+$$ 
+
+e um Passeio Aleatório com Constante (drift) se
+
+$$
+Y_t=\alpha+Y_{t-1}+\epsilon_t 
+$$ 
+
+No caso do passeio aleatório puro, observar que a sua primeira diferença é um ruído branco.
+
+$$
+Y_t=Y_{t-1}+\epsilon_t 
+$$
+
+
+$$
+Y_t-Y_{t-1}=\Delta Y_t=\epsilon_t 
+$$
+
+<br>
+
+## Modelos Autorregressivos (AR) 
+
+<br>
+
+Os **modelos autorregressivos** (AR) sao definidos pela série em função de seus valores defasados mais um erro aleatório ruído branco. O número de variáveis defasadas define a "ordem" do modelo. 
+
+<br>
+
+$$
+AR(1): Y_t=\phi_0+\phi_1Y_{t-1}+\epsilon_t
+$$
+
+$$
+AR(2): Y_t=\phi_0+\phi_1Y_{t-1}+\phi_2Y_{t-2}+\epsilon_t
+$$ 
+
+$$
+AR(3): Y_t=\phi_0+\phi_1Y_{t-1}+\phi_2Y_{t-2}+\phi_3Y_{t-3}+\epsilon_t
+$$ 
+
+<br>
+
+Generalizando:
+
+<br>
+
+$$
+AR(p): Y_t=\phi_0+\phi_1Y_{t-1}+\phi_2Y_{t-2}+\phi_3Y_{t-3}+ \dots +\phi_pY_{t-p}+\epsilon_t
+$$
+
+<br>
+
+Usando o operador de defasagem o modelo autorregressivo pode ser reescrito como:
+
+<br>
+
+$$
+Y_t=\phi_0+\phi_1LY_t+\phi_2L^2Y_t+\phi_3L^3Y_t+ \dots +\phi_pL^pY_{t}+\epsilon_t
+$$ 
+$$
+(1-\phi_1L-\phi_2L^2-\phi_3L^3- \dots -\phi_pL^p)Y_t=\phi_0+\epsilon_t
+$$ 
+
+<br>
+
+ou ainda como 
+
+<br>
+
+$$
+\phi(L)Y_t=\phi_0+\epsilon_t
+$$
+
+<br>
+
+## Modelos Médias Móveis (MA) 
+
+<br>
+
+Nos **modelos de médias móveis** (MA) a série $Y_t$ é definida como uma média ponderada de erros (choques) correntes e passados ocorridos em relação ao nível médio da série. O número de termos defasados define a ordem do modelo.  
+
+<br>
+
+$$
+MA(1): Y_t=\mu+\epsilon_t+\theta_1\epsilon_{t-1}
+$$ 
+$$
+MA(2): Y_t=\mu+\epsilon_t+\theta_1\epsilon_{t-1}+\theta_2\epsilon_{t-2}
+$$ 
+
+$$
+MA(3): Y_t=\mu+\epsilon_t+\theta_1\epsilon_{t-1}+\theta_2\epsilon_{t-2}+\theta_3\epsilon_{t-3}
+$$ 
+
+<br>
+
+Generalizando:
+
+<br>
+
+$$
+MA(q): Y_t=\mu+\epsilon_t+\theta_1\epsilon_{t-1}+\theta_2\epsilon_{t-2}+\theta_3\epsilon_{t-3}+\dots+\theta_q\epsilon_{t-q}
+$$
+
+<br>
+
+Usando o operador de defasagem o modelo de médias móveis pode ser reescrito como:
+
+<br>
+
+$$
+Y_t=\mu+\epsilon_t+\theta_1L\epsilon_t+\theta_2L^2\epsilon_t+\theta_3L^3\epsilon_t+\dots+\theta_qL^q\epsilon_t
+$$ 
+
+$$
+Y_t=\mu+(1+\theta_1L+\theta_2L^2+\theta_3L^3+\dots+\theta_qL^q)\epsilon_t
+$$ 
+
+<br>
+
+ou ainda como 
+
+<br>
+
+$$
+Y_t=\mu+\theta(L)\epsilon_t
+$$
+
+<br>
+
+## Modelos Autorregressivos e de Médias Móveis (ARMA)
+
+<br>
+
+os **modelos autorregressivos e de médias móveis** (ARMA)  são formados por combinações de AR e MA.
+
+<br>
+
+$$
+ARMA(1,1): Y_t=\phi_0+\phi_1Y_{t-1}+\epsilon_t+\theta_1\epsilon_{t-1}
+$$ 
+
+$$
+ARMA(2,1): Y_t=\phi_0+\phi_1Y_{t-1}+\phi_2Y_{t-2}+\epsilon_t+\theta_1\epsilon_{t-1}
+$$ 
+
+$$
+ARMA(2,2): Y_t=\phi_0+\phi_1Y_{t-1}+\phi_2Y_{t-2}+\epsilon_t+\theta_1\epsilon_{t-1}+\theta_2\epsilon_{t-2}
+$$ 
+
+<br>
+
+Generalizando, ARMA(p,q):
+
+<br>
+
+$$
+Y_t=\phi_0+\phi_1Y_{t-1}+\phi_2Y_{t-2}+\phi_3Y_{t-3}+ \dots +\phi_pY_{t-p}+ \epsilon_t+\theta_1\epsilon_{t-1}+\theta_2\epsilon_{t-2}+\theta_3\epsilon_{t-3}+\dots+\theta_q\epsilon_{t-q}
+$$
+
+<br>
+
+Com o uso do operador de defasagem, compactamente tem-se
+
+<br>
+
+$$
+\phi(L)Y_t=\phi_0+\theta(L)\epsilon_t
+$$
+
+<br>
+
+## Modelos Autorregressivos Integrados de Médias Móveis (ARIMA) 
+
+<br>
+
+os modelos AR(p), MA(q) e ARMA(p,q) não são adequados se as séries não forem estacionárias e precisarem ser diferenciadas. Séries como o Passeio Aleatório que precisam ser diferenciadas "d" vezes para se tornarem estacionárias são chamadas de *séries integradas de ordem d*; 
+
+Uma série não estacionária $Y_t$ integrada de ordem d, ou seja, $Y_t \thicksim I(d)$, segue um modelo autoregressivo integrado de médias móveis de ordem (p,d,q), conhecido como ARIMA (p,d,q) se 
+
+<br>
+
+$$		
+\Delta^dY_t=(1-L)^dY_t=\phi_1Y_{t-1}+\phi_2Y_{t-2}+\dots +\phi_pY_{t-p}+ \epsilon_t+\theta_1\epsilon_{t-1}+\theta_2\epsilon_{t-2}+\dots+\theta_q\epsilon_{t-q}
+$$
+<br>
+
+ou ainda como 
+
+<br>
+
+$$
+\phi(L)\Delta^dY_t=\theta(L)\epsilon_t
+$$
+<br>
+
+# Estacionariedade
+
+<br>	
+	
+Um processo estocástico é dito estacionário quando suas características probabilísticas não mudam ao longo do tempo.
+
+Duas formas de estacionariedade: **Forte**, quando as funções de distribuição de probabilidades conjuntas são iguais ao longo do tempo e **Fraca**, quando dado uma série temporal $Y_t$, a média é constante ($E(Y_t)=\mu$), a variância é constante ($Var(Y_t)=\sigma^2$) e a covariância depende apenas do lag $k$ (defasagem) ($cov(Y_t,Y_{t-1})=f(k)$) 
+
+<br>
+
+## FAC e FACp
+
+<br>
+
+No máximo, o gráfico de uma série sugere se a mesma é ou não estacionária.  Nos anos 70, Box e Jenkins utilizavam da análise de "correlogramas" para identificar se uma série era I(0) ou não. 
+
+Correlogramas são gráficos da função de autocorrelação (FAC) e de autocorrelação parcial (FACp), assim definidos: 
+
+<br>
+
+$$
+FAC=\rho_k=\frac{cov(Y_t,Y_{t-k})}{\sqrt{var(Y_t)var(Y_{t-k})}}
+$$ 
+	
+sendo que a FAC varia de +1 a -1. 
+
+Ou, considerando que a série é estacionária, as variâncias são iguais
+
+<br>
+
+$$
+\rho_k=\frac{cov(Y_t,Y_{t-k})}{var(Y_t)}
+$$ 
+$$
+\rho_k=\frac{\gamma_k}{\sigma^2}
+$$ 
+Como para k=0, tem-se $\gamma_0 \equiv \sigma^2$, então $\rho_k=\frac{\gamma_k}{\gamma_0}$. Os pares [k,$\rho_k$]$\rho_k$ formam a FAC de $Y_t$.
+
+Uma questão prática importante é definir o tamanho do lag a ser analisado. Uma regra prática é fazer $k=t/4$. O correlograma é o gráfico de $\hat{\rho}_k$ contra as k defasagens.
+	 
+O coeficiente de autocorrelação parcial de ordem k, $\phi_{kk}$ mede o grau de correlação entre $Y_t$ e $Y_{t-k}$, mantendo-se constante o efeito dos lags intermediários. Quando k=1 a FAC é igual a FACp.
+
+$\phi_{11}$, $\phi_{22}$, $\phi_{kk}$ podem ser obtidos via regressão com o uso de variáveis padronizadas e sem constante.
+
+<br>
+
+$$
+Y_t=\beta_1Y_{t-1}+\epsilon_t \quad \phi_{11}=\beta_1
+$$
+$$
+Y_t=\beta_1Y_{t-1}+\beta_2Y_{t-2}+\epsilon_t \quad \phi_{22}=\beta_2
+$$
+$$
+Y_t=\beta_1Y_{t-1}+\beta_2Y_{t-2}+\beta_3Y_{t-3}+\epsilon_t \quad \phi_{33}=\beta_3
+$$
+Os pares [k,$\phi_{kk}$] formam a FACp de $Y_t$.
+
+<br>	 
+
+# Testes de Hipóteses sobre as autocorrelações
+
+<br>
+
+É possível criar testes de hipóteses sobre as autocorrelações:
+
+<br>
+
+$$
+H_0:\rho_1=\rho_2=\dots=\rho_k
+$$
+$$
+H_1: pelo \quad menos \quad uma \quad autocorrelação \neq 0 
+$$
+
+<br>
+
+A estatística de teste é feita pelo Teste de Ljung e Box
+
+<br>
+
+$$
+LB=T(T+2)\sum_{j=1}^{k}\frac{\hat{\rho}^2}{T-j}
+$$ 
+
+<br>
+
+com T sendo o tamanho da série temporal, $\rho$ a correlação e j o tamanho do lag.
+
+<br>
+
+# Simulações realizadas no R
+
+<br>
+
+## Preparação dos dados 
+
+<br>
+
+``` {r econ1, warning=FALSE, message=FALSE}
+#Direcionado o R para o Diretorio a ser trabalhado
+setwd('C:/Users/Joao Ricardo Lima/Dropbox/tempecon/facape/econometria2')
+
+#Limpa o Ambiente Global
+rm(list=ls())
+
+#Pacotes a serem usados
+library(forecast) #necessario para o ACF e PACF
+library(ggplot2)
+library(stats)
+library(gridExtra)# multiple grid-based plots on a page
+```
+
+<br>
+
+## Processo AR(1)
+
+<br>
+
+```{r econ2, warning=FALSE, message=FALSE}
+#Inicio do Script
+#Simulacao de um Processo AR (1)
+Yt <- arima.sim(model=list(ar=0.20), n=1000)
+#layout <- layout(matrix(c(1,1,2,3), nrow=2, ncol=2, byrow=T))
+plot(Yt,
+     lty=1, lwd=1,bty='l',
+     main='',
+     ylab='', col='blue')
+mtext('Processo AR(1) Simulado ', side=3, line=2, font=2)
+```
+
+<br>
+
+## FAC, FACp e Teste de Ljung-Box
+
+<br>
+
+```{r econ3, warning=FALSE, message=FALSE}
+Acf(Yt, lag.max = 24, main='FAC')
+Pacf(Yt, lag.max = 24, main='FACP')
+Box.test(Yt, lag=20, type = "Ljung")
+```
+
+<br>
+
+## Comparação de valores positivos e negativos do coeficiente do AR(1)
+
+<br>
+
+```{r econ4, warning=FALSE, message=FALSE}
+Xt <- arima.sim(model=list(ar=0.9), n=500)
+Zt <- arima.sim(model=list(ar=0.1), n=500)
+par(mfrow=c(2,1))
+
+# FAC e FACp
+Acf(Xt, lag.max = 24, main='ACF 0.9')
+Acf(Zt, lag.max = 24, main='ACF 0.1')
+```
+
+<br>
+
+## Simulacao de um Processo MA (1)
+
+<br>
+
+```{r econ5, warning=FALSE, message=FALSE}
+Zt <- arima.sim(model=list(ma=0.1), n=1000)
+autoplot(Zt)
+
+
+# FAC e FACp
+p1 <- ggAcf(Zt)+ggtitle('ACF Zt')
+p2 <- ggPacf(Zt)+ggtitle('PACF Zt')
+grid.arrange(p1, p2, ncol=1)
+```
+
+<br>
+
+## Visualizado as diferencas entre o AR(1) e o MA(1)
+
+<br>
+
+```{r econ6, warning=FALSE, message=FALSE}
+p1 <- ggAcf(Zt)+ggtitle('ACF Zt')
+p2 <- ggPacf(Zt)+ggtitle('PACF Zt')
+p3 <- ggAcf(Yt)+ggtitle('ACF Yt')
+p4 <- ggPacf(Yt)+ggtitle('PACF Yt')
+grid.arrange(p3, p1, p4, p2, ncol=2)
+```
+<br>
+
+## Processos ARMA (1,1)
+
+<br>
+
+```{r econ7, warning=FALSE, message=FALSE}
+arma <- arima.sim(list(order = c(1,0,1), ar = 0.1, ma=0.1), n = 1000)
+autoplot(arma)+ggtitle('ARMA(1,1)')
+g1 <- autoplot(arma)+ggtitle('ARMA(1,1)')
+g2 <- ggAcf(arma)+ggtitle('ACF')
+g3 <- ggPacf(arma)+ggtitle('PACF')
+grid.arrange(g1, g2, g3, ncol=1)
+```
