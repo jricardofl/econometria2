@@ -52,23 +52,53 @@ MORETTIN, P. A. *Econometria Financeira – Um curso em séries temporais financ
 
 <br>
 
+### INTRODUÇÃO
+
+<br>
+
+1.1. Conceito e Abordagens de Análise de Séries Temporais
+
+1.2. Conceito de Processo Estocástico
+
+1.3. Conceito de Série Temporal
+
+1.4. Objetivos da Análise de Séries Temporais
+
+1.5. Defasagem e Avanço da Série Temporal
+
+1.6. Operadores
+
+1.7. Modelos Básicos para Séries Temporais
+
+<br>
+
+## ANÁLISE DOS COMPONENTES TENDÊNCIA E SAZONALIDADE DAS SÉRIES TEMPORAIS
+
+<br>
+
+2.1 Tendência Determinística e estocástica
+
+2.2 Sazonalidade Determinística e estocástica
+
+<br>
+
 ### ANÁLISE DE ESTACIONARIEDADE 
 
 <br>
 
-1. Conceito de Estacionariedade 
+3.1 Conceito de Estacionariedade 
 
-2. Função de Autocorrelação 
+3.2 Função de Autocorrelação 
 
-3. Função de Autocorrelação Parcial
+3.3 Função de Autocorrelação Parcial
 
-4. Conceito de Raiz Unitária
+3.4 Conceito de Raiz Unitária
 
-5. Conceito de Integração 
+3.5 Conceito de Integração 
 
-6. Propriedades de Séries Integradas
+3.6 Propriedades de Séries Integradas
 
-7. Testes de Raiz Unitária
+3.7 Testes de Raiz Unitária
 
 <br>
 
@@ -76,17 +106,17 @@ MORETTIN, P. A. *Econometria Financeira – Um curso em séries temporais financ
 
 <br>
 
-1. Processo Aleatório Puro ou Ruido Branco (White Noise) 
+4.1 Processo Aleatório Puro ou Ruido Branco (White Noise) 
 
-2. Passeio Aleatório (Random Walk) 
+4.2 Passeio Aleatório (Random Walk) 
 
-3. Modelo Autorregressivo (AR) 
+4.3 Modelo Autorregressivo (AR) 
 
-4. Modelo de Média Móvel (MA) 
+4.4 Modelo de Média Móvel (MA) 
 
-5. Modelo Autorregressivo e de Média Móvel (ARMA) 
+4.5 Modelo Autorregressivo e de Média Móvel (ARMA) 
 
-6. Modelo Autorregressivo Integrado e de Média Móvel (ARIMA) 	 
+4.6 Modelo Autorregressivo Integrado e de Média Móvel (ARIMA) 	 
 
 <br>
 
@@ -94,13 +124,13 @@ MORETTIN, P. A. *Econometria Financeira – Um curso em séries temporais financ
 
 <br>
 
-1. Identificação 
+5.1 Identificação 
 
-2. Estimação 
+5.2 Estimação 
 
-3. Verificação 
+5.3 Verificação 
 
-4. Previsão  	 
+5.4 Previsão  	 
 
 <br>
 
@@ -108,9 +138,9 @@ MORETTIN, P. A. *Econometria Financeira – Um curso em séries temporais financ
 
 <br>
 
-1. Introdução – Modelagem de Variância 
+6.1 Introdução – Modelagem de Variância 
 
-2. Modelos Univariados: 
+6.2 Modelos Univariados: 
 
 I) Modelo ARCH  
 	
@@ -124,9 +154,9 @@ III) Modelo TARCH
 
 <br>
 
-1. Modelo de Auto-regressão Vetorial (modelo VAR) 
+7.1 Modelo de Auto-regressão Vetorial (modelo VAR) 
 
-2. Análises com VAR 
+7.2 Análises com VAR 
 
 I) Diagnóstico/Avaliação 
 	 
@@ -136,7 +166,7 @@ III) Decomposição da Variância do Erro de Previsão
 	 
 IV) Causalidade 
    
-3. Análise de Co-integração 
+7.3 Análise de Co-integração 
 
 I) Conceito de Cointegração 
 	 
@@ -154,9 +184,13 @@ III) Modelo de Correção de Erro (VEC)
 
 <br>
 
-# AULA 3
+# [AULA 3](https://jricardofl.github.io/econometria2/econ2_aula3)
 
-# AULA 4
+<br>
+
+# [AULA 4](https://jricardofl.github.io/econometria2/econ2_aula4)
+
+<br>
 
 # AULA 5
 
