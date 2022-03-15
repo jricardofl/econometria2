@@ -1,0 +1,368 @@
+---
+title: "Aula 5 - Econometria de Séries Temporais"
+author: "João Ricardo F. de Lima"
+date: "`r format(Sys.time(), '%d de %B de %Y.')`"
+output: 
+    html_document:
+        theme: flatly
+        number_sections: yes
+        highlight: textmate
+#        includes: 
+#          in_header: "header.html"
+        toc: yes
+        toc_float:
+          collapsed: yes
+          smooth_scroll: yes 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 10, 
+  fig.height = 7,
+  fig.align  = "center",
+  comment    = "#",
+  size       = "normalsize"
+  )
+
+#Linhas precisam de ajuste semanal: 30, 104, 201, 204
+```
+
+<br>
+
+# Raiz Unitária
+
+<br>
+
+Considere um processo AR(1)
+
+$$
+Y_t=\phi_1Y_{t-1}+\epsilon_t
+\tag{1}
+$$
+
+se $\phi_1=1$, tem-se que 
+$$
+Y_t=Y_{t-1}+\epsilon_t
+\tag{2}
+$$
+
+ou seja, $Y_t$  é um passeio aleatório, não estacionário, possui uma raiz unitária. Contudo, a existência da raiz unitária não é devido o fato de $\phi_1=1$ no modelo (1) acima. Está relacionado com as raízes de um polinômio;
+
+Usando o operador de defasagem na equação (1), tem-se
+
+$$
+Y_t=\phi_1LY_t+\epsilon_t
+\tag{3}
+$$
+
+rearranjando os termos
+
+$$
+Y_t-\phi_1LY_t=\epsilon_t
+\tag{4}
+$$
+
+$$
+(1-\phi_1L)Y_t=\epsilon_t
+\tag{5}
+$$
+
+em que $1-\phi_1L=0$ é denominada de equação característica/polinômio 1 grau.
+
+Resolvendo para L,
+$$
+\phi_1L=1
+\tag{6}
+$$
+
+$$
+L=\frac{1}{\phi_1}
+\tag{7}
+$$
+
+
+denominada de raiz da equação. Identificar se existe raiz unitária no AR(1) é saber se L=1. No AR(1), L=1 quando $\phi_1=1$. Se $\phi_1=1$, L=1 e o processo possui raiz unitária;
+
+Se $|\phi_1|<1$, $|L|>1$, a raiz está fora do círculo unitário, não possui raiz unitária, a série é estacionária; 
+
+Se $|\phi_1|>1$, $|L|<1$, a série é dita explosiva, não estacionária, sem interesse para análise.
+
+<br>
+
+## Conceito de Integração
+
+<br>
+
+Uma série não estacionária possui comportamento de passeio aleatório, que é representado pela presença de raízes unitárias na equação característica da série. Esta, para se tornar estacionária, precisa ser diferenciada tantas vezes quanto for o número de raízes unitárias. Assim, tem-se o conceito de *séries integradas*; 
+
+Uma série é integrada de ordem d, designada por $Y_t \sim I(d)$, se for necessário diferenciá-la d vezes para torná-la estacionária; 
+
+<br>
+ 
+## Propriedades de Séries Integradas
+
+<br>
+
+Considere três séries $X_t, Y_t$ e $Z_t$. Tem-se as seguintes propriedades de séries integradas:
+
+1) Se $X_t \sim I(0)$ e $Y_t \sim I(1)$, então $Z_t=X_t+Y_t \sim I(1)$, isto é, uma combinação linear de séries estacionárias e não estacionárias é não estacionária; 
+
+2) Se $X_t \sim I(d)$, então $Z_t=a+bX_t \sim I(d)$, onde a e b são constantes. Em outras palavras, uma combinação linear de uma série I(d) também é uma série I(d); 
+
+3) Se $X_t \sim  I(d_1)$ e $Y_t \sim I(d_2)$ com $d_1 < d_2$, então, $Z_t=aX_t+bY_t \sim I(d_2)$ 
+
+4) Se $X_t \sim I(d)$ e $Y_t \sim I(d)$, então, $Z_t=aX_t+bY_t \sim I(d^*)$; $d^*$ em geral é igual a d, mas em alguns casos $d^* \leq d$.
+
+<br>
+
+## Determinação da Estacionariedade
+
+<br>
+
+Para identificar se uma série possui raiz unitária, deve-se realizar testes específicos desenvolvidos com esta finalidade. Existem diversos: DF (Dickey-Fuller), ADF (Dickey-Fuller aumentado), DF-GLS (Dickey-Fuller por minimos quadrados generalizados); Phillips-Perron, KPSS, etc. 
+
+Apresentamos aqui apenas o DF, ADF e o DF-GLS, que são os mais usados. No DF, considere um processo autorregressivo de ordem p, dado por:
+ 
+$$
+y_t=\rho y_{t-1}+\epsilon_t
+$$
+em que $\epsilon_t$ é um termo ruído branco, ou seja, possui média zero e variância constante. O que se deseja testar é se $\rho=1$, ou seja, y possui raiz unitária, sendo não estacionário. Perceba que com $\rho=1$ o processo AR acima se torna um passeio aleatório sem constante e todo PA é por definição não estacionário. Por conveniência estatística o teste é conduzido com a equação em primeira diferença.
+ 
+$$
+y_t-y_{t-1}=\rho y_{t-1}-y_{t-1}+\epsilon_t
+$$ 
+$$
+\Delta y_t=(\rho-1)y_{t-1}+\epsilon_t
+$$ 
+
+$$
+\Delta y_t=\delta y_{t-1}+\epsilon_t
+$$ 
+
+em que $\delta=\rho-1$. Se $\rho=1$, $\delta=0$. Desta forma, $\Delta y$ seria igual a um ruído branco, estacionário.
+
+Assim, a hipótese nula do teste é que $\delta=0$, ou seja, $\rho=1$ e a série possui raiz unitária, sendo estacionária na primeira diferença;
+
+A significância de $\delta$ segue uma distribuição tabulada por Dickey e Fuller denominada de $\tau$. 
+
+No teste, é possível definir na equação de teste se a mesma possui intercepto e tendência. No ADF, considere um processo autorregressivo de ordem p, dado por:
+
+$$
+\Delta y_t=\delta y_{t-1}+ \sum_{j=1}^{p-1} \rho_{j+1} \Delta y_{t-j}+\epsilon_t
+$$ 
+
+A diferença entre o DF e o ADF está na inclusão de termos de diferença defasados ($\Delta y_{t-j}$). 
+ 
+O objetivo de incluir estes termos de diferença defasados é tornar os erros serialmente independentes, dado que a existência de autocorrelação nos resíduos invalida os valores da distribuição $\tau$. 
+
+No mais, a estatística deste teste é a mesma do DF, sendo usado os valores críticos de $\tau$. 
+
+A hipótese nula deste teste é a mesma do DF, ou seja, a série possui raiz unitária, sendo não estacionaria.
+
+O teste ADF também pode incluir termos  determinísticos de intercepto e tendência. Como o mesmo possui termos de diferença defasados, tem-se o problema de determinar o numero de defasagens p.
+
+Para isto, deve-se usar os critérios de informação de Akaike ou Schwarz disponíveis nos softwares.
+
+<br>
+
+# Demonstração no R
+
+<br>
+
+## Entrada dos dados
+
+<br>
+
+```{r econ5_1, warning=FALSE, message=FALSE}
+#Direcionado o R para o Diretorio a ser trabalhado
+setwd('C:/Users/Joao Ricardo Lima/Dropbox/tempecon/facape/econometria2')
+
+#Pacotes utilizados
+library(forecast)
+library(ggplot2)
+library(urca)
+library(tseries)
+
+# Entrada de dados e configuração como série temporal
+ipca <- read.csv2('econ2Raula3arq1.csv', header=T, sep=";", dec=",")
+ipca <- ipca[,-1]
+ipca <- ts(ipca, start=c(1999,08), freq = 12)
+
+selic <- read.csv2('econ2Raula3arq2.csv', header=T, sep=';', dec=',')
+selic <- selic[,-1]
+selic <- ts(selic, start=c(1999, 08), freq=12)
+```
+
+``` {r econ5_2}
+# FAC e FACp
+#Visualizando da série, da FAC e da FACp 
+ggtsdisplay(ipca, main='IPCA')
+ggtsdisplay(selic, main='Selic')
+
+```
+
+<br>
+
+## Teste de Raiz Unitária DF (Dickey-Fuller)
+
+<br>
+
+``` {r econ5_3}
+
+#Estatistica de Teste DF para IPCA
+ipcan.df <- ur.df(ipca, type = 'none', lags=0)
+summary(ipcan.df)
+
+ipcad.df <- ur.df(ipca, type = 'drift', lags=0)
+summary(ipcad.df)
+
+ipcat.df <- ur.df(ipca, type = 'trend', lags=0)
+summary(ipcat.df)
+```
+
+São três diferentes fórmulas para o DF, baseados nas três possibilidade de testes: nenhum, com constante e com tendência. Estas fórmulas levam a três diferentes hipóteses a ser testadas. Em todos os três casos, contudo, se testa se $\delta=0$ (o coeficiente do valor de y defasadado é igual a zero), ou seja, se existe uma raiz unitária. 
+
+Assim, para `` type="none" ``, o output irá mostrar tau1, o valor crítico (com diferentes níveis de significância) para a hipótese nula de $\delta=0$. 
+
+Para `` type="drift" ``, tau2 é o valor crítico para o teste de $\delta=0$. phi1 se refere a segunda hipótese, que é a hipótese nula combinada de que a constante $a_0=\delta=0$, ou seja, ambos valores são testados para ser iguais a zero ao mesmo tempo. 
+
+Finalmente, para `` type="trend" `` as hipóteses testadas são $tau3:\delta=0$; $phi3:\delta=a_2=0$, com $a_2$ igual ao coeficiente da tendência e  $phi2:a_0=\delta=a_2=0$.
+
+<br>
+
+
+## Teste de Raiz Unitária ADF (Dickey-Fuller Aumentado)
+
+<br>
+
+``` {r econ5_4}
+#Estatistica de Teste ADF para IPCA
+ipcan.adf <- ur.df(ipca, type = 'none', selectlags='AIC')
+summary(ipcan.adf)
+
+ipcad.adf <- ur.df(ipca, type = 'drift', selectlags='AIC')
+summary(ipcad.adf)
+
+ipcat.adf <- ur.df(ipca, type = 'trend', selectlags='AIC')
+summary(ipcat.adf)
+```
+
+<br>
+
+## Teste de Raiz Unitária Phillips-Perron e KPSS
+
+<br>
+
+
+``` {r econ5_5}
+#Estatistica de Teste PP para IPCA
+ipca.pp <- ur.pp(ipca, type = 'Z-tau', model="trend", lags='short')
+summary(ipca.pp)
+
+#Estatistica de Teste KPSS para IPCA
+ipca.kpss <- ur.kpss(ipca, type = 'tau', lags='short')
+summary(ipca.kpss)
+```
+
+<br>
+
+# Determinação da Estacionariedade
+
+<br>
+
+Um teste de segunda geração, mais poderoso e, por isto, aconselhado a ser usado, é o DF-GLS. O teste DF-GLS é uma versão modificada do teste ADF. A diferença é devido a uma alteração na série por meio de uma regressão por Mínimos Quadrados Generalizados (MQG) antes de executar o teste ADF.
+
+Esse teste foi desenvolvido por Elliot et al. (1996), sugerindo uma mudança no ADF, em que retira-se as variáveis explicativas relativas a tendência determinística (constante e coeficientes de tendência), por meio de uma diferenciação na série. Existem duas possíveis hipóteses alternativas: a série é estacionária em torno de uma tendência linear ou é estacionária sem uma tendência linear.
+
+Com relação a primeira alternativa, o teste DF-GLS é realizado inicialmente estimando o intercepto e a tendência via MQG, incluindo novas variáveis $\tilde{y}, x_t$ e $z_t$, em que
+
+$$
+\tilde{y}=\left\{\begin{array}{rcc}
+  y_t &\mbox{se} & t=1 \\
+  y_t-ay_{t-1} & & t>1.
+  \end{array}\right.
+$$
+$$
+x_t=\left\{\begin{array}{rcc}
+    1 &\mbox{se} & t=1 \\
+    1-a & & t>1.
+    \end{array}\right.
+$$
+
+$$
+z_t=\left\{\begin{array}{rcc}
+      1 &\mbox{se} & t=1 \\
+      t-a(t-1) & & t>1.
+      \end{array}\right.
+$$
+
+e $a=1-\frac{13,5}{T}$
+
+Estima-se, então, uma regressão por MQO
+
+$$
+\tilde{y}=\delta_0x_t+\delta_1z_t+\epsilon_t
+$$ 
+os estimadores $\hat{\delta_0}$ e  $\hat{\delta_1}$ são usados para se retirar a tendência dos dados, gerando uma nova série $y^*_t$. O passo seguinte é estimar um ADF na variável transformada
+
+$$
+\Delta y^*_t=\alpha+\beta y^*_{t-1}+ \sum_{j=1}^{k}\xi_j\Delta y^*_{t-j}+\epsilon_t
+$$
+e verificar se $\beta=0$
+
+No caso da segunda hipótese alternativa $a=1-\frac{7}{T}$, se elimina z da regressão (1) e estima (2) sobre a variável transformada, verificando se $\beta=0$.  Os lags são escolhidos pelo critério de Schwarz $=[12(\frac{T}{100})^{1/4}]$ .
+
+<br>
+
+## Estimação do DF-GLS no R
+
+<br>
+
+``` {r econ5_6}
+#Verificaçao da Estacionariedade das séries
+#Teste de raiz unitaria DF-GLS
+#Definção do numero máximo de lags
+print(12*(length(ipca)/100)^(1/4))
+print(12*(length(selic)/100)^(1/4))
+
+#Estatistica de Teste DFGLS para IPCA Com Constante
+
+ipcaC.dfgls <- ur.ers(ipca, type = c("DF-GLS"),
+                        model = c("constant"),
+                        lag.max = 8)
+summary(ipcaC.dfgls)
+
+#Estatistica de Teste DFGLS para IPCA Com Tendência
+
+ipcaT.dfgls <- ur.ers(ipca, type = c("DF-GLS"),
+                     model = c("trend"),
+                     lag.max = 8)
+summary(ipcaT.dfgls)
+
+
+#Estatistica de Teste DFGLS para Selic
+selicC.dfgls <- ur.ers(selic, type = c("DF-GLS"),
+                      model = c("constant"),
+                      lag.max = 12)
+summary(selicC.dfgls)
+
+selicT.dfgls <- ur.ers(selic, type = c("DF-GLS"),
+                      model = c("trend"),
+                      lag.max = 12)
+summary(selicT.dfgls)
+```
+
+Para o IPCA com constante e 8 lags, em modulo o valor da estatistica de teste é maior do que o valor critico de 10%. Assim, pode-se rejeitar a hipotese nula de que a serie possui raiz unitária. O mesmo resultado é obtido quando se faz o teste com tendência.
+
+No caso da SELIC, o valor da estatística de teste é menor do que o valor crítico, tanto com constante quanto com tendência. Assim, conclui-se que não pode rejeitar a hipótese nula de que a série possui raiz unitária, ou seja, a série não é estacionária.  
+      
+<br>
+
+# Processo Tendência e Diferença Estacionário
+
+<br>      
+      
+A não estacionariedade de uma série tem relação com a presença de tendência na série, seja determinística ou estocástica. Se uma série tiver raiz unitária e sua diferenciação torná-la estacionária ela é dita processo estacionário em diferenças. Existem ainda as séries com tendência determinística, denominadas de série tendência estacionária pois flutuam em torno da tendência determinística. Para tornar a série estacionária, deve-se remover a tendência corretamente. Se for determinística, pegando os resíduos de uma regressão que estima a tendência. Se for estocástica, via diferenciação da série;
