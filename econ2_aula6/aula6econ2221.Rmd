@@ -1,0 +1,264 @@
+---
+title: "Aula 6 - Econometria de Séries Temporais"
+author: "João Ricardo F. de Lima"
+date: "`r format(Sys.time(), '%d de %B de %Y.')`"
+output: 
+    html_document:
+        theme: flatly
+        number_sections: yes
+        highlight: textmate
+#        includes: 
+#          in_header: "header.html"
+        toc: yes
+        toc_float:
+          collapsed: yes
+          smooth_scroll: yes 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 10, 
+  fig.height = 7,
+  fig.align  = "center",
+  comment    = "#",
+  size       = "normalsize"
+  )
+
+#Linhas precisam de ajuste semanal: 30, 104, 201, 204
+```
+
+<br>
+
+# Metodologia de Box-Jenkins
+
+<br>
+
+Nos anos 70, Box e Jenkins utilizam da análise de "correlogramas" para identificar se uma série era I(0) ou não e para identificar as ordens "p" e "q" do modelo. Posteriormente, foram definidos testes estatísticos com tal finalidade, denominados de testes de raiz unitária, já vistos. Segundo a metodologia de Box-Jenkins, a análise de séries temporais tem por objetivo principal a realização de previsões.
+
+Esta metodologia permite fazer previsões com base nos valores contemporâneos e passados explorando a correlação temporal entre os valores realizados pela série. O primeiro passo da metodologia é a *Identificação*. Isto significa descobrir qual dos possíveis modelos ARIMA descreve o comportamento da série. Filosofia: "Deixem os dados falarem por si mesmos". Em outras palavras, é identificar os valores de "p", "d" e "q". Isto não pode ser feito apenas com a observação visual da série.
+
+O primeiro passo na identificação é avaliar se a série é estacionária. Se não for, a série deve ser diferenciada "d" vezes até se tornar estacionária.  Sendo a série original ou diferenciada, estacionária, o próximo passo é determinar se é gerada por um termo AR(p), MA(q) ou ARMA(p,q), além dos próprios valores de "p" e "q".
+
+De forma resumida e simplificada, o comportamento da FAC e FACp pode ser dado por:
+
+<br>
+
+<center>Tabela 1: Comportamento da FAC e FACp: </center>
+
+| \hline    Processo  | FAC          | FACP         |
+|:-------------------:|:------------:|:------------:|
+| \hline        AR(p) | Declinante   | Truncada k=p |
+| MA(q)               | Truncada k=p | Declinante   |
+| ARMA(p,q)           | Declinante   | Declinante   |
+
+<br>
+
+A **identificação** é a mais difícil das etapas da metodologia de Box e Jenkins. Normalmente mais de um modelo é escolhido para testar se é o gerador da série. Uma possibilidade é escolher o modelo com base nos critérios de Akaike (AIC) e Schwarz (BIC). 
+
+A segunda etapa é a **estimação** do modelo, sempre considerando o princípio da parcimônia.
+
+A terceira etapa é a **verificação**: verificar se o modelo é adequado. A forma mais comum é a análise dos resíduos. Na análise dos resíduos deve-se verificar se o comportamento é de um ruído branco. Para isto, pode-se fazer um correlograma dos resíduos.
+
+A quarta etapa é a **previsão**.
+
+<br>
+
+## Estimação no R - Metodologia de Box-Jenkins
+
+<br>
+
+Considere a série temporal abaixo: dbgg: Dívida Bruta do Governo Geral (mensais-12/2006 a 02/2017).
+
+``` {r econ6_1}
+#Direcionado o R para o Diretorio a ser trabalhado
+setwd('C:/Users/Joao Ricardo Lima/Dropbox/tempecon/facape/econometria2')
+
+#Inicio do Script
+
+#Pacotes a serem usados
+library(forecast)
+library(ggplot2)
+library(urca)
+library(tseries)
+library(lmtest)
+library(readxl)
+library(tidyverse)
+library(kableExtra)
+
+options(digits=4)
+
+#Ler os dados via Excel
+divida <- read_excel("Divggnp1.xls", col_types = 'numeric')
+
+# Tratar DADOS #
+divida <- t(divida[-c(1:8, 54:67),-c(1:2)])
+divida <- ts(divida, start=c(2006,12), freq=12)
+
+# Rotular
+colnames(divida) <- c(1:45)
+dbgg <- divida[,c(3)] #divida bruta do governo geral
+
+date <- seq(as.Date('2006-12-01'),to=as.Date("2017-02-01"),by='1 month')
+dbgg2 <- tibble(date,dbgg)
+```
+
+<br>
+
+## Gráfico da série, FAC e FACp
+
+<br>
+
+``` {r econ6_2}
+# Grafico da Serie
+ggplot(data=dbgg2) +
+  geom_line(aes(x=date, y=dbgg), colour="darkblue", size=1.5) +
+  xlab('Anos') + ylab('% PIB') +
+  ggtitle('Trajetoria da Divida Bruta do Brasil')
+
+##Correlograma das series
+#Visualizando as duas funcoes - FAC e FACP
+
+ggtsdisplay(dbgg, main='Dívida Bruta do Governo Geral')
+```
+
+Os Correlogramas da série em nível, mostrado abaixo, indicam que a mesma não deve ser estacionária.
+
+<br>
+
+## Teste de Raiz Unitária
+
+<br>
+
+``` {r econ6_3}
+##Correlograma das series
+#Visualizando as duas funcoes - FAC e FACP
+
+#Analise dos testes de raiz unitaria em nivel
+#Definicao do numero maximo de lags
+print(12*(length(dbgg)/100)^(1/4))
+
+#Estatistica de Teste DFGLS para DCP
+dbgg.dfgls <- ur.ers(dbgg, type = c("DF-GLS"),
+                     model = c("trend"),
+                     lag.max = 0)
+summary(dbgg.dfgls)
+```
+
+O teste de raiz unitária DF-GLS da série em nível, leva a seguinte conclusão de que a série não é estacionária em nível.
+
+<br>
+
+## Análise da série na 1 Diferença
+
+<br>
+
+``` {r econ6_4}
+#Diferenciacao da Serie
+ddbgg <- diff(dbgg)
+
+##Correlograma das series na 1 Diferença
+#Visualizando as duas funcoes - FAC e FACP
+
+ggtsdisplay(ddbgg, main='Dívida Bruta do Governo Geral')
+
+
+# Teste de Raiz Unitária
+
+ddbgg.dfgls <- ur.ers(ddbgg, type = c("DF-GLS"),
+                      model = c("constant"),
+                      lag.max = 4)
+summary(ddbgg.dfgls)
+```
+
+Os Correlogramas da série na primeira diferença, mostrado abaixo, indicam que a mesma pode ser estacionária.  O teste de raiz unitária DF-GLS com a variável dbgg na primeira diferença leva a conclusão de que considerando uma significância de 10\%, rejeita a Hipótese Nula de que a série possui raiz unitária, ou seja, a série é estacionária. 
+
+Existem duas formas de estimação, uma delas é observando o correlograma e a outra é usando a função `` auto.arima``.
+
+<br>
+
+## Estimacao do Modelo ARIMA usando a função auto.arima
+
+<br>
+
+``` {r econ6_5}
+auto.arima <- auto.arima(dbgg, max.p=10, max.d=1, max.q=10, trace=TRUE)
+summary(auto.arima)
+coeftest(auto.arima)
+```
+
+Após a estimação do modelo é possível visualizar a série observada e a estimada! 
+
+``` {r econ6_6}
+#Visualizacao das duas series - observada e a estimada
+plot(dbgg)
+lines(fitted(auto.arima), col='red')
+legend('topleft', col=c('black','red'), lty=c(1,1), lwd=c(2,2),
+       legend=c('DBGG', 'DBGG-Estimado'))
+
+```
+
+Pode-se então, realizar as análises nos resíduos do modelo estimado.
+
+``` {r econ6_7}
+#Analise dos residuos do ARIMA
+plot(auto.arima$residuals)
+
+#Teste de Ljung Box para autocorrelacao nos residuos
+#Hipotese nula do teste eh que os residuos nao sao autocorrelacionados
+
+Box.test(auto.arima$residuals, lag=20,
+         type="Ljung-Box", fitdf=length(coef(auto.arima)))
+
+# FAC e FACp dos resíduos
+ggtsdisplay(ddbgg, main='Dívida Bruta do Governo Geral')
+
+#Teste de Normalidade dos residuos
+shapiro.test(auto.arima$residuals)
+```
+
+<br>
+
+## Uso do modelo para fazer previsão
+
+<br>
+
+``` {r econ6_8}
+#E possivel fazer previsoes com os resultados
+forecast.arima <- forecast(auto.arima, h=12, level=c(20, 40, 60)) 
+#level é o intervalo de confianca da previsao
+
+forecast.arima
+
+#Grafico da previsao
+autoplot(forecast.arima)+
+  ggtitle('Previsão do Arima (1,1,1)')
+
+#Avaliacao da Previsao
+end(dbgg)
+
+fim <- c(2016,8)
+amostra <- window(dbgg, end=fim)
+observado <- window(dbgg, start=fim+c(0,1))
+
+#Reestimacao do modelo
+arima2 <- Arima(amostra, order=c(1,1,1))
+coeftest(arima2)
+summary(arima2)
+
+#previsao com o novo modelo
+forecast.arima2 <- forecast(arima2, h=length(observado), level=20)$mean
+
+#Comparação do observado com o estimado
+previsao <- tibble(forecast.arima2,observado)
+data2 <- c("Setembro/2016", "Outubro/2016", "Novembro/2016", 
+           "Dezembro/2016", "Janeiro/2017", "Fevereiro/2017")
+previsao <- tibble(data2, previsao)
+
+kable(previsao, align='ccc', col.names = c("Data Previsão", 
+                                           "Previsão com o Modelo Estimado", 
+                                           "Valores Observados")) %>% 
+  kable_styling(full_width=TRUE, position = "center")
+```
