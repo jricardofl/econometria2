@@ -192,11 +192,17 @@ III) Modelo de Correção de Erro (VEC)
 
 <br>
 
-# AULA 5
+# [AULA 5](https://jricardofl.github.io/econometria2/econ2_aula5)
 
-# AULA 6
+<br>
 
-# AULA 7
+# [AULA 6](https://jricardofl.github.io/econometria2/econ2_aula6)
+
+<br>
+
+# [AULA 7](https://jricardofl.github.io/econometria2/econ2_aula7)
+
+<br>
 
 # AULA 8
 
