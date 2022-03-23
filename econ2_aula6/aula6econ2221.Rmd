@@ -90,18 +90,18 @@ library(kableExtra)
 
 options(digits=4)
 
-#Ler os dados via Excel
-divida <- read_excel("Divggnp1.xls", col_types = 'numeric')
+divida <- read_excel("Divggnp_19032022.xls", col_types = 'numeric', sheet = "% PIB")
 
 # Tratar DADOS #
-divida <- t(divida[-c(1:8, 54:67),-c(1:2)])
+divida <- t(divida[-c(1:8, 58:73),-c(1)])
 divida <- ts(divida, start=c(2006,12), freq=12)
 
 # Rotular
-colnames(divida) <- c(1:45)
+colnames(divida) <- c(1:49)
+
 dbgg <- divida[,c(3)] #divida bruta do governo geral
 
-date <- seq(as.Date('2006-12-01'),to=as.Date("2017-02-01"),by='1 month')
+date <- seq(as.Date('2006-12-01'),to=as.Date("2022-01-01"),by='1 month')
 dbgg2 <- tibble(date,dbgg)
 ```
 
@@ -113,10 +113,11 @@ dbgg2 <- tibble(date,dbgg)
 
 ``` {r econ6_2}
 # Grafico da Serie
+#Gráfico
 ggplot(data=dbgg2) +
-  geom_line(aes(x=date, y=dbgg), colour="darkblue", size=1.5) +
-  xlab('Anos') + ylab('% PIB') +
-  ggtitle('Trajetoria da Divida Bruta do Brasil')
+  geom_line(aes(x=date, y=dbgg), colour="darkblue", size=1.0) +
+  xlab('Meses do Ano') + ylab('% PIB') +
+  ggtitle('Trajetoria da Divida Bruta do Brasil (% do PIB)')
 
 ##Correlograma das series
 #Visualizando as duas funcoes - FAC e FACP
@@ -143,7 +144,7 @@ print(12*(length(dbgg)/100)^(1/4))
 #Estatistica de Teste DFGLS para DCP
 dbgg.dfgls <- ur.ers(dbgg, type = c("DF-GLS"),
                      model = c("trend"),
-                     lag.max = 0)
+                     lag.max = 2)
 summary(dbgg.dfgls)
 ```
 
@@ -169,7 +170,7 @@ ggtsdisplay(ddbgg, main='Dívida Bruta do Governo Geral')
 
 ddbgg.dfgls <- ur.ers(ddbgg, type = c("DF-GLS"),
                       model = c("constant"),
-                      lag.max = 4)
+                      lag.max = 2)
 summary(ddbgg.dfgls)
 ```
 
@@ -213,7 +214,7 @@ Box.test(auto.arima$residuals, lag=20,
          type="Ljung-Box", fitdf=length(coef(auto.arima)))
 
 # FAC e FACp dos resíduos
-ggtsdisplay(ddbgg, main='Dívida Bruta do Governo Geral')
+ggtsdisplay(auto.arima$residuals, main='FAC e FACp dos resíduos')
 
 #Teste de Normalidade dos residuos
 shapiro.test(auto.arima$residuals)
@@ -239,7 +240,7 @@ autoplot(forecast.arima)+
 #Avaliacao da Previsao
 end(dbgg)
 
-fim <- c(2016,8)
+fim <- c(2021,7)
 amostra <- window(dbgg, end=fim)
 observado <- window(dbgg, start=fim+c(0,1))
 
@@ -253,8 +254,8 @@ forecast.arima2 <- forecast(arima2, h=length(observado), level=20)$mean
 
 #Comparação do observado com o estimado
 previsao <- tibble(forecast.arima2,observado)
-data2 <- c("Setembro/2016", "Outubro/2016", "Novembro/2016", 
-           "Dezembro/2016", "Janeiro/2017", "Fevereiro/2017")
+data2 <- c("Agosto/2021","Setembro/2021", "Outubro/2021", "Novembro/2021", 
+           "Dezembro/2021", "Janeiro/2022")
 previsao <- tibble(data2, previsao)
 
 kable(previsao, align='ccc', col.names = c("Data Previsão", 
