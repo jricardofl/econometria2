@@ -1,0 +1,248 @@
+---
+title: "Aula 7 - Econometria de Séries Temporais"
+author: "João Ricardo F. de Lima"
+date: "`r format(Sys.time(), '%d de %B de %Y.')`"
+output: 
+    html_document:
+        theme: flatly
+        number_sections: yes
+        highlight: textmate
+#        includes: 
+#          in_header: "header.html"
+        toc: yes
+        toc_float:
+          collapsed: yes
+          smooth_scroll: yes 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 10, 
+  fig.height = 7,
+  fig.align  = "center",
+  comment    = "#",
+  size       = "normalsize"
+  )
+
+#Linhas precisam de ajuste semanal: 30, 104, 201, 204
+```
+
+<br>
+
+# Co-Integração
+
+<br> 
+
+A regressão de uma série temporal não estacionária contra outra série temporal não estacionária pode produzir uma regressão espúria, também chamada de regressão sem sentido;
+
+Contudo, existe uma exceção a essa regra. Considere duas séries não estacionárias e integradas de mesma ordem, $Y_t$ e $X_t$ e uma relação linear entre elas dada por
+
+$$
+Y_t=\beta X_t + \epsilon_t
+$$
+
+Se existir algum valor de $\beta$ tal que $Y_t-\beta X_t$ seja I(0), mesmo com as séries originais não sendo estacionárias, a regressão é considerada não espúria.
+
+Neste caso, as séries são ditas cointegradas e compartilham a mesma tendência. Dito de outra forma, o que se obteve foi uma combinação linear de duas séries I(d) que gerou um nova série com menor ordem de integração.
+
+Como dito em aula anterior, sobre as propriedades das séries cointegradas:
+
+1) se $X_t \sim I(d)$ e $Y_t \sim I(d)$, então, $Z_t=aX_t+bY_t \sim I(d^*)$; 
+
+2) $d^*$ em geral é igual a d, mas em alguns casos $d^* \leq d$.
+
+Como exemplo, considere uma série de despesas de consumo pessoal e outra de renda pessoal disponível, como dado no capítulo 21 do Gujarati, tabela 21.1.
+		 
+Inicialmente serão usados os **correlogramas** para tentar identificar se a série é ou não é estacionária.
+
+<br> 
+
+## Entrada de dados no R
+
+<br>
+
+``` {r econ7_1, warning=FALSE, message=FALSE }
+#Direcionado o R para o Diretorio a ser trabalhado
+setwd('C:/Users/Joao Ricardo Lima/Dropbox/tempecon/facape/econometria2')
+
+#Pacotes a serem usados
+library(forecast)
+library(readxl)
+library(ggplot2)
+library(urca)
+
+#Lendo os dados do arquivo do Excel
+dados <- read_excel("Table 21_1.xls")
+dados <- dados[,-c(1:2)] #excluindo as duas primeiras colunas
+
+#Configurando como serie temporal
+dados <- ts(dados, start=c(1947,1), freq = 4)
+
+#Usando apenas uma parte dos dados
+dados1 <- window(dados, start=c(1970,1), end=c(1991,4))
+
+#gerando as duas series que serao trabalhadas
+rpd <- dados1[,1]
+dcp <- dados1[,2]
+```
+
+<br>
+
+## Gráfico das séries, FAC e FACp
+
+<br>
+
+``` {r econ7_2, warning=FALSE, message=FALSE}
+#Graficos
+plot(dcp, main='Despesa com Consumo X Renda Disponivel',
+     xlab='Anos', ylab='US$', lwd=3)
+lines(rpd, col='red', lwd=3)
+legend('topleft', col=c('black','red'), lty=c(1,1), lwd=c(2,2),
+       legend=c('DCP', 'RPD'))
+
+#Correlograma das series
+ggtsdisplay(dcp, main='Despesa Pessoal Consumo')
+ggtsdisplay(rpd, main='Renda Pessoal Disponivel')
+
+#Diferenciacao da Serie
+ddcp <- diff(dcp, differences = 1) 
+drpd <- diff(rpd, differences = 1)
+
+#Visualizando Correlogramas na 1 Diferenca
+ggtsdisplay(ddcp, main='Despesa Pessoal Consumo - 1 diferenca')
+ggtsdisplay(drpd, main='Renda Pessoal Disponivel - 1 diferenca')
+```
+
+<br> 
+
+## Teste de Raiz Unitária DFGLS
+
+<br> 
+
+O resultado do teste DF-GLS, em nível, com constante e tendência é:
+
+<br> 
+
+``` {r econ7_3, warning=FALSE, message=FALSE }
+#Analise dos testes de raiz unitaria em nivel
+#Definicao do numero maximo de lags
+print(12*(length(dcp)/100)^(1/4))
+print(12*(length(rpd)/100)^(1/4))
+
+#Estatistica de Teste DFGLS para DCP
+dcpT.dfgls <- ur.ers(dcp, type = c("DF-GLS"),
+                      model = c("trend"),
+                      lag.max = 3)
+summary(dcpT.dfgls)
+
+#Estatistica de Teste DFGLS para RPD
+rpdT.dfgls <- ur.ers(rpd, type = c("DF-GLS"),
+                       model = c("trend"),
+                       lag.max = 3)
+summary(rpdT.dfgls)
+
+#Estatistica de Teste DFGLS para DCP na 1 Diferença
+
+#Diferenciacao da Serie
+ddcp <- diff(dcp, differences = 1) 
+drpd <- diff(rpd, differences = 1)
+
+ddcpT.dfgls <- ur.ers(ddcp, type = c("DF-GLS"),
+                     model = c("constant"),
+                     lag.max = 3)
+summary(ddcpT.dfgls)
+
+#Estatistica de Teste DFGLS para RPD na 1 Diferença
+drpdT.dfgls <- ur.ers(drpd, type = c("DF-GLS"),
+                     model = c("constant"),
+                     lag.max = 3)
+summary(drpdT.dfgls)
+```
+
+<br> 
+
+As duas séries possuem raiz unitária em nível, mas são estacionárias na primeira diferença, ou seja, são I(1). Então, as duas séries são integradas de mesma ordem. Se a combinação linear entre as duas for estacionário, elas serão cointegradas. Isto significa que existe uma relação de longo prazo entre elas. Considere a estimação de um modelo de despesas com consumo (DCP) em função da renda pessoal disponível (RPD):
+
+$$
+DCP_t=\beta_0+\beta_1RPD_t+u_t
+$$ 
+
+em que o $u_t$ é o termo de erro. 
+
+Resultado da regressão estimada:
+
+<br>
+
+``` {r econ7_4, warning=FALSE, message=FALSE}
+#Estimacao do Modelo DCP em funcao da RPD
+regressao1 <- lm(dcp ~ rpd)
+summary(regressao1)
+```
+
+<br>
+
+A interpretação de RPD é como uma propensão marginal a consumir de longo prazo. Os resíduos desta regressão podem ser submetidos a um teste de raiz unitária.
+
+<br>
+
+## Análise dos resíduos 
+
+<br>
+
+``` {r econ7_5, warning=FALSE, message=FALSE}
+#Salvando os residuos da regressao
+resid1 <- regressao1$residuals
+
+ggtsdisplay(resid1, main='Correlograma dos Residuos do Modelo')
+
+#Teste de raiz unitaria nos residuos
+#Definicao do numero maximo de lags
+print(12*(length(resid1)/100)^(1/4))
+
+resid.dfgls <- ur.ers(resid1, type = c("DF-GLS"),
+                      model = c("constant"),
+                      lag.max = 1)
+summary(resid.dfgls)
+```
+
+<br>
+
+Os resíduos da regressão são estacionários, ou seja, I(0), considerando um nível de significância de 5\%. Então, apesar das séries apresentarem tendencias estocásticas, a combinação linear delas (resíduo) é I(0).
+
+O resultado disto é que a regressão passa a ter sentido e dizemos que as duas variáveis são co-integradas, ou seja, existe entre elas uma relação de equilíbrio de longo prazo.
+
+No curto prazo, contudo, pode haver desequilíbrio Assim, o termo de erro u, obtido da estimativa, pode ser usado para relacionar o comportamento de curto prazo e o do longo prazo. Isto é chamado de **mecanismo de correção de erro**.
+
+Considere o seguinte modelo:
+
+$$
+\Delta{DCP_t}=\alpha_0+\alpha_1 \Delta{RPD_t}+\alpha_2u_{t-1}+\epsilon_t
+$$ 
+$\Delta$ indica o operador de diferença; $\epsilon$ um termo de erro aleatório e $u_{t-1}$ é o valor defasado de um período do resíduo da regressão co-integrante.
+
+A equação do mecanismo de correção de erro acima mostra que $\Delta{DCP_t}$ depende de $\Delta{RPD_t}$ e também do termo de erro de equilíbrio;
+	
+Se o termo de erro for diferente de zero, o modelo está fora de equilíbrio. Suponha que $\Delta{RPD_t}$ é zero e $u_{t-1}$ é negativo. Isso significa que $DCP_{t-1}$ é elevado demais para estar em equilíbrio, ou seja, $DCP_{t-1}$ está acima de seu valor de equilíbrio. 
+
+A estimativa da equação do mecanismo de correção de erro é: 
+
+<br>
+
+## Estimação do Mecanismo de Correção de Erro no R
+
+<br>
+
+``` {r econ7_6, warning=FALSE, message=FALSE}
+#Estimacao do modelo de Correcao de erro
+regressao2 <- lm(ddcp ~ drpd + lag(resid1,-1)[-length(dcp)])
+summary(regressao2)
+``` 
+
+<br>
+
+Como pode ser observado, a estimativa de u(-1) é negativo. Isto significa que DCP está acima do equilíbrio e começará a cair no período seguinte para retornar ao equilíbrio. A interpretação é que 12,91 \% da discrepância entre as duas variáveis no trimestre anterior é eliminado no trimestre atual.
+
+A interpretação de D(RPD) é como uma propensão marginal a consumir de curto prazo.
