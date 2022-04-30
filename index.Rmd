@@ -204,7 +204,9 @@ III) Modelo de Correção de Erro (VEC)
 
 <br>
 
-# AULA 8
+# [AULA 8](https://jricardofl.github.io/econometria2/econ2_aula8)
+
+<br>
 
 # AULA 9
 
