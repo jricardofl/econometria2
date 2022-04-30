@@ -1,0 +1,315 @@
+---
+title: "Aula 8 - Econometria de Séries Temporais"
+author: "João Ricardo F. de Lima"
+date: "`r format(Sys.time(), '%d de %B de %Y.')`"
+output: 
+    html_document:
+        theme: flatly
+        number_sections: yes
+        highlight: textmate
+#        includes: 
+#          in_header: "header.html"
+        toc: yes
+        toc_float:
+          collapsed: yes
+          smooth_scroll: yes 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 10, 
+  fig.height = 7,
+  fig.align  = "center",
+  comment    = "#",
+  size       = "normalsize"
+  )
+
+#Linhas precisam de ajuste semanal: 30, 104, 201, 204
+```
+
+<br>
+
+# Modelo SARIMA
+
+<br> 
+
+Séries econômicas com periodicidade inferior a um ano, mensais ou trimestrais, por exemplo, normalmente exibem autocorrelação importante entre as observações dos instantes do tempo distantes entre si por *s* ou múltiplos de **s**, em que o **s** é o número de períodos contidos em um ano (**s**=12 para dados mensais e igual a 4 para dados trimestrais); 
+
+Esta correlação é devido à sazonalidade que é comum em séries de preços; 
+
+A correlação sazonal precisa ser modelada e por isto surgem os modelos **ARIMA sazonais** denominados de modelos **SARIMA**.
+
+Os modelos SARIMA incorporam, alem dos componentes AR(p), MA(q) e d diferenciações consecutivas, os componentes autoregressivo sazonal, SAR(P), média móvel sazonal, SMA(Q), e D diferenciações sazonais necessárias caso a série apresente raiz unitária sazonal;
+
+Assim, tem-se a denominação $SARIMA(p,d,q)x(P,D,Q)_s$; 
+
+A diferenciação sazonal é dada por
+
+$$
+\Delta_{12}Y_t=Y_t-Y_{t-12}=(1-L^{12})Y_t
+$$
+
+em que $\Delta_{12}=(1-L^{12})$ é chamado de *operador de diferença sazonal*
+
+No R a série com uma diferença sazonal de 12 meses é gerada com ``ds12x <- diff(x, lag=12)`` na qual x é a série a ser diferenciada sazonalmente.
+ 
+No caso de modelos estacionários puramente sazonais que apresentam componentes sazonais autorregressivos (SAR) e de média móvel (SMA), tem-se a seguinte estrutura:
+
+$$
+y_t=A_1y_{t-s}+\dots+A_Py_{t-Ps}+u_t+M_1u_{t-s}+\dots+M_Qu_{t-Qs}
+$$
+
+$$
+y_t-A_1y_{t-s}-\dots-A_Py_{t-Ps}=u_t+M_1u_{t-s}+\dots+M_Qu_{t-Qs}
+$$
+
+$$
+(1-A_1L^s-\dots-A_PL^{Ps})yt=(1-M_1L^S-\dots-M_QL^{Qs})u_t
+$$
+
+Caso a série não seja estacionária, precisando ser diferenciada sazonalmente, o modelo sazonal autorregressivo integrado de médias móveis é dado por:
+
+$$
+y_t-y_{t-s}=A_1y_{t-s}+\dots+A_Py_{t-Ps}+u_t+M_1u_{t-s}+\dots+M_Qu_{t-Qs}-y_{t-s}
+$$
+
+$$
+\Delta_s^Dy_t=y_{t-s}(A-1)+\dots+A_Py_{t-Ps}+u_t+M_1u_{t-s}+\dots+M_Qu_{t-Qs}
+$$
+
+$$
+(1-A_1L^s-\dots-A_PL^{Ps})\Delta_s^Dy_t=(1-M_1L^S-\dots-M_QL^{Qs})u_t
+$$
+
+que pode ser escrito de forma compacta como:
+
+$$
+A(L^s)\Delta_s^Dy_t=M(L^s)u_t
+$$
+
+E o modelo SARIMA geral $(p,d,q)x(P,D,Q)_s$ pode ser dado por
+
+$$
+\alpha(L)A(L^s)\Delta_s^D\Delta^dy_t=m(L)M(L^s)u_t
+$$
+
+## Entrada de dados no R
+
+<br>
+
+``` {r econ8_1, warning=FALSE, message=FALSE }
+#Direcionado o R para o Diretorio a ser trabalhado
+setwd('C:/Users/Joao Ricardo Lima/Dropbox/tempecon/facape')
+
+#Pacotes
+#library(BETS)
+library(urca)
+#library(TSA)
+library(lmtest)
+library(normtest)
+library(FinTS)
+#library(xlsx)
+library(forecast)
+library(ggthemes)
+library(uroot)
+library(ggplot2)
+library(dplyr)
+
+#Dados
+data("AirPassengers")
+
+
+```
+
+# Gráficos
+
+``` {r econ8_2, warning=FALSE, message=FALSE }
+ts.plot(AirPassengers, ylab="Vendas de Passagens Aereas", xlab="Anos")
+
+monthplot(AirPassengers, ylab="Vendas de Passagens Aereas", xlab="Meses")
+
+```
+
+# Decomposição da série
+
+``` {r econ8_3, warning=FALSE, message=FALSE }
+plot(decompose(AirPassengers))
+
+```
+
+# Análise de Estacionariedade da série
+
+``` {r econ8_4, warning=FALSE, message=FALSE }
+#Estacionariedade da Serie
+ggtsdisplay(AirPassengers, main='Vendas de Passagens Aereas')
+
+#Estatistica de Teste DFGLS para RPD
+print(12*(length(AirPassengers)/100)^(1/4))
+
+airT.dfgls <- ur.ers(AirPassengers, type = c("DF-GLS"),
+                     model = c("trend"),
+                     lag.max = 13)
+summary(airT.dfgls)
+```
+# Análise da estacionariedade da série
+
+```{r econ8_5, warning=FALSE, message=FALSE }
+#Fazendo a Primeira Diferenca da Serie
+
+ts.plot(diff(AirPassengers, lag=1, differences = 1))
+ggtsdisplay(diff(AirPassengers, lag=1, differences = 1))
+
+
+# Teste de raiz unitária
+
+dair <- diff(AirPassengers, lag=1, differences = 1)
+
+dairT.dfgls <- ur.ers(dair, type = c("DF-GLS"),
+                     model = c("constant"),
+                     lag.max = 12)
+summary(dairT.dfgls)
+```
+
+# Tornando a série estacionária
+
+``` {r econ8_6, warning=FALSE, message=FALSE }
+
+#Gráfico da Primeira Diferenca da Serie em LOG
+
+ts.plot(diff(log(AirPassengers), lag=1, differences = 1))
+
+# Correlogramas da série
+ggtsdisplay(diff(log(AirPassengers), lag=1, differences = 1))
+
+# Geração da série em log diferenciada
+
+dlair <- diff(log(AirPassengers), lag=1, differences = 1)
+
+# Teste de raiz unitária da série em log diferenciada
+dlairT.dfgls <- ur.ers(dlair, type = c("DF-GLS"),
+                      model = c("constant"),
+                      lag.max = 12)
+summary(dlairT.dfgls)
+
+```
+
+# Teste de Raiz Unitária Sazonal
+
+Em um grande número de séries temporais econômicas mensais e trimestrais, o componente sazonal está presente, fazendo com que a série apresente picos ou vales em períodos de tempo determinados. 
+
+Quando existem indícios de sazonalidade estocástica, utilizam-se testes de raízes unitárias sazonais. A partir de tais testes, é possível analisar a estacionariedade de uma série temporal na presença de componentes sazonais e, conseqüentemente, definir a ordem de integração da mesma. 
+
+O teste mais conhecido de raízes sazonais foi o previsto por Hyllerberg et al (1990), chamado de teste HEGY.
+
+No caso de séries trimestrais, para checar se existe raiz unitária sazonal é estimado o modelo:
+
+$$
+\Delta_4y_t=\pi_1z_{1,t-1}+\pi_2z_{2,t-1}+\pi_3z_{3,t-1}+\pi_4z_{3,t-2}+\sum_{j=1}^{p}\alpha_j^*\Delta_4y_{t-j}+u_t
+$$
+
+em que $z_{1t}=(1+L+L^2+L^3)y_t$, $z_{2t}=-(1-L+L^2+L^3)y_t$ e $z_{3t}=-(1-L^2)y_t$ com L sendo o operado de defasagem. 
+
+A hipótese nula de que $H_0:\pi_1=0$, $H_0:\pi_2=0$ e $H_0:\pi_3=\pi_4=0$, corresponde aos testes de raizes regulares, semestrais e anuais, respectivamente. 
+
+O modelo acima é estimado por MQO e se faz testes t para significâncias individuais e F para testar hipóteses conjuntas.
+
+No caso de séries mensais, para checar se existe raiz unitária sazonal é estimado o modelo:
+
+\begin{align*}
+\Delta_{12}y_t=\pi_1z_{1,t-1}+\pi_2z_{2,t-1}+\pi_3z_{3,t-1}+\pi_4z_{3,t-2}+\pi_5z_{4,t-1}+ \\ \pi_6z_{4,t-2}+\pi_7z_{5,t-1}+\pi_8z_{5,t-2}+\pi_9z_{6,t-1}+\pi_{10}z_{6,t-2}+ \\
+\pi_{11}z_{7,t-1}+\pi_{12}z_{7,t-2}+\sum_{j=1}^{p}\alpha_j^*\Delta_{12}y_{t-j}+u_t
+\end{align*}
+
+O processo tem uma raiz unitaria regular se $\pi=0$ e tem raiz unitária sazonal se qualquer outro $\pi_i$ (i=2,...,12) for zero; 
+
+No caso de raízes mensais, as significâncias das frequências indicam o ciclo sazonal. 
+
+| **\hline    Freq.** | **$0$**  | **$\pi$** | **$\frac{\pi}{2}$** | **$\frac{2\pi}{3}$** | **$\frac{\pi}{3}$** | **$\frac{5\pi}{6}$** | **$\frac{\pi}{6}$**   |
+|:-------------------:|:--------:|:---------:|:-------------------:|:--------------------:|:-------------------:|:--------------------:|:---------------------:|
+| \hline Coef         | $\pi_1$  | $\pi_2$   | $\pi_3$ $\pi_4$     | $\pi_5$ $\pi_6$      | $\pi_7$ $\pi_8$     | $\pi_9$ $\pi_{10}$   | $\pi_{11}$ $\pi_{12}$ |
+| Período             | $\infty$ | 2         | 4                   | 3                    | 6                   | 2.4                  | 12                    |
+| Ciclo               | $0$      | 6         | 3                   | 4                    | 2                   | 5                    | 1                     |
+
+
+Assim a frequência zero corresponde a zero ciclos sazonais, ou seja, uma raiz unitária regular. Na frequência $\pi$ se tem 6 ciclos sazonais de 2 períodos (meses) e assim sucessivamente, até a frequência $\pi/6$ que corresponde a um ciclo sazonal de 12 meses.
+
+
+``` {r econ8_7, warning=FALSE, message=FALSE }
+
+#Teste de Raiz Unitária Sazonal HEGY
+hegy.test(log(AirPassengers), deterministic = c(1,1,1), 
+          lag.method = "AICc")
+
+#Fazendo a diferenciacao Sazonal
+ggtsdisplay(diff(diff(log(AirPassengers), lag=1, differences = 1), lag=12, differences = 1))
+
+ds12lair <- diff(diff(log(AirPassengers), lag=1, differences = 1), lag=12, differences = 1)
+
+#Teste de Raiz Unitária Sazonal HEGY
+hegy.test(ds12lair, deterministic = c(1,1,1), 
+          lag.method = "AICc")
+```
+
+# Estimação do Modelo SARIMA
+
+``` {r econ8_8, warning=FALSE, message=FALSE }
+auto.arima <- auto.arima(log(AirPassengers), max.p=6, max.d=1, max.q=6, max.P=6, max.Q=6,  max.D=1, seasonal = T, trace = TRUE)
+
+summary(auto.arima)
+coeftest(auto.arima)
+```
+
+# Verificação dos pressupostos do Modelo SARIMA
+
+``` {r econ8_9, warning=FALSE, message=FALSE }
+#Etapa da Verificacao
+diag<-tsdiag(auto.arima, gof.lag=20)
+
+#Teste de nao existencia de autocorrelacao serial
+Box.test(x=auto.arima$residuals, lag=24, type="Ljung-Box",
+         fitdf=2)
+
+#Teste de Homocedasticidade
+ArchTest(auto.arima$residuals, lags=12)
+
+#Normalidade dos residuos
+jb.norm.test(auto.arima$residuals, nrepl=2000)
+```
+
+# Previsao
+
+``` {r econ8_10, warning=FALSE, message=FALSE }
+forecast.sarima <- forecast(auto.arima, h=12, level=c(20, 40, 60)) #level e o intervalo de confianca da previsao
+forecast.sarima
+
+#Grafico da previsao
+autoplot(forecast.sarima)+
+  ggtitle('Forecast do Sarima')
+
+accuracy(forecast.sarima)
+
+#Avaliacao da Previsão
+end(AirPassengers)
+
+fim <- c(1959,12)
+amostra <- window(log(AirPassengers), end=fim)
+observado <- window(log(AirPassengers), start=fim+c(0,1))
+
+#Reestimacao do modelo
+sarima2 <- auto.arima(amostra, max.p=0, max.d=1, 
+                      max.q=1, max.P=0, max.Q=1,  max.D=1,
+                      seasonal = T, trace = TRUE)
+
+coeftest(sarima2)
+summary(sarima2)
+
+#previsao com o novo modelo
+forecast.sarima2 <- forecast(sarima2, h=length(observado), level=20)$mean
+forecast.sarima2
+observado
+
+accuracy(forecast.sarima2, observado)
+```
