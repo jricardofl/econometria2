@@ -1,0 +1,307 @@
+---
+title: "Aula 9 - Econometria de Séries Temporais"
+author: "João Ricardo F. de Lima"
+date: "`r format(Sys.time(), '%d de %B de %Y.')`"
+output: 
+    html_document:
+        theme: flatly
+        number_sections: yes
+        highlight: textmate
+#        includes: 
+#          in_header: "header.html"
+        toc: yes
+        toc_float:
+          collapsed: yes
+          smooth_scroll: yes 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 10, 
+  fig.height = 7,
+  fig.align  = "center",
+  comment    = "#",
+  size       = "normalsize"
+  )
+
+#Linhas precisam de ajuste semanal: 30, 104, 201, 204
+```
+
+<br>
+
+# Modelos ARCH-GARCH
+
+<br>
+
+Em geral, as análises feitas em econometria modelam a média condicional de uma variável aleatória $E(Y|X)$. Contudo, o modelo desta aula é diferente por modelar não a média mas sim a variância condicional (ou a volatidade) de uma variável.
+
+Existem várias razões pelas quais se pode querer modelar e fazer previsão da volatilidade. Primeiro, você pode	precisar analisar o risco de manter um ativo ou o valor de uma opção. Em segundo lugar, prever intervalos de confiança podem variar no tempo, de modo que intervalos mais precisos podem ser obtidos	modelando a variância dos erros. Terceiro, estimadores mais eficientes podem ser obtidos se a heteroscedasticidade	nos erros é tratada corretamente.
+ 
+Os modelos de heterocedasticidade condicional autorregressiva (ARCH) são projetados especificamente para modelar e prever variâncias condicionais.
+
+A variância da variável dependente é modelada em função dos valores passados da variável dependente e das independentes, ou variáveis exógenas
+
+Os modelos ARCH foram introduzidos por Engle (1982) e generalizados como GARCH (Generalized ARCH) por Bollerslev (1986) e Taylor (1986). Estes modelos são amplamente utilizados em vários ramos da econometria, especialmente na análise de séries temporais financeiras. 
+ 
+Ao desenvolver um modelo ARCH, deve-se fornecer três especificações distintas - uma 	para a da equação média condicional, uma para a da variância condicional e outra para a da distribuição de erro condicional.
+
+Especificamente em séries financeiras, a variância do resíduo varia ao longo do tempo de uma maneira que depende de quão elevados tenham sido os erros no passado. Muitas vezes há evidência de uma "aglomeração" de erros grandes e pequenos.
+ 
+Assim, existe um tipo particular de heterocedasticidade presente, em que a variância do erro da regressão depende da volatilidade dos erros no passado recente.
+
+Engle desenvolveu um modelo chamado de ARCH (Heterocedasticidade condicional autorregressiva) que considera este tipo de heterocedasticidade. Considere o modelo, 
+
+$$
+Y_t=\beta_1+\beta_2Y_{t-1}+\epsilon_t
+$$ 
+
+E uma equação que relaciona a variância do erro ao tamanho da volatilidade observada em períodos recentes, cuja forma mais simples seria
+
+$$
+\sigma_t^2=\alpha_0+\alpha_1\epsilon_{t-1}^2
+$$
+
+A equação acima diz que a variância de $\epsilon_t$, $\sigma_{t}^2$ tem dois componentes: uma constante e as novidades do último período sobre volatilidade, que se modela com o resíduo quadrado do último período, chamado de termo ARCH.
+ 
+O resíduo $\epsilon_t$ é heterocedástico, condicional a $\epsilon_{t-1}$. Ao levar em consideração essa informação sobre a heterocedasticidade condicional de $\epsilon_t$, se obtêm estimativas mais eficientes dos parâmetros $\beta_1,\beta_2,\beta_3$. 
+
+Como a variância de $\epsilon_t$ na equação acima depende apenas da volatilidade do último período, este modelo é denominado de ARCH(1).
+ 
+Generalizando, a variância poderia depender de qualquer número de volatilidades defasadas. Assim, o ARCH(p) é definido como 
+
+$$
+\sigma_t^2=\alpha_0+\alpha_1\epsilon_{t-1}^2+\alpha_2\epsilon_{t-2}^2+ \dots + \alpha_p\epsilon_{t-p}^2
+$$
+
+todos os p+1 parâmetros e os $\beta's$ são estimados conjuntamente por máxima verossimilhança. 
+ 
+A série em nível tem aparência de maior variabilidade para valores mais altos da série; Testes de raiz unitária indicam que não são estacionárias em nível.
+
+A série de retornos, definida por $r_t=ln(y_t)-ln(y_{t-1})$ parece estacionária mas com períodos alternados de alta e baixa variabilidade (aglomerados de volatilidade).
+
+Em geral, os retornos não são autocorrelacionados mas também não são IID (independente e igualmente distribuídos).
+
+A distribuição dos retornos apresenta-se não normal, pelo teste de Jarque-Bera. 
+ 
+<br>
+
+## Restrições no Modelos ARCH
+
+<br>
+
+As séries com efeito ARCH possuem algumas características:
+
+1) Para garantir variância positiva e estacionariedade do modelo é necessário impor restrições nos parâmetros do modelo. Para um ARCH(p)
+
+$$
+\sigma_t^2=\alpha_0+\alpha_1\epsilon_{t-1}^2+\alpha_2\epsilon_{t-2}^2+ \dots + \alpha_p\epsilon_{t-p}^2
+$$
+
+a condição suficiente para variância condicional positiva é que 
+
+$\alpha_0>0$ e $\alpha_p \ge 0$ para todo i, com i=1,2,3,...,p. a condição necessária para que a série seja estacionária é que o $\sum_{i=1}^{p}\alpha_i < 1$;
+
+<br>
+
+## Deficiências no Modelos ARCH
+
+<br>
+
+Dentre as deficiências do modelo, as mais relevantes são a superestimação da volatilidade e tratar erros positivos e negativos da mesma forma.
+
+O modelo não capta assimetria do impacto do retorno do erro sobre a volatilidade. Na prática, a volatilidade dos retornos de uma ativo financeiro reage de forma diferente a retornos positivos (subida de preços) e negativos (queda de preços).
+ 
+Uma das dificuldades do Modelo ARCH é a necessidade de ajustar modelos de ordem muito grande. Bollerslev (1986) propôs um modelo ARCH Generalizado, chamado de GARCH que é normalmente mais parcimonioso. A literatura sugere que se estime um GARCH quando o ARCH a ser estimado for de ordem superior a 3.
+
+O GARCH considera a variância condicional como função dos erros passados ao quadrado e de valores defasados da variância condicional.
+ 
+Um modelo GARCH (p,q) é definido por 
+
+$$
+\sigma_t^2=\omega+\sum_{j=1}^{p}\beta_j\sigma_{t-j}^2+\sum_{i=1}^{q}\alpha_j\epsilon_{t-i}^2
+$$
+
+A equação modela a variância condicional, sendo função de três termos: a) constante; b) volatilidade fo período anterior (termo ARCH)e a variância prevista do último período (termo GARCH).
+ 
+O (1, 1) em GARCH (1, 1) refere-se à presença de um termo GARCH autorregressivo de primeira ordem	(o primeiro termo entre parênteses) e um termo ARCH de média móvel de primeira ordem (o segundo em parênteses). Um modelo ARCH comum é um caso especial de uma especificação GARCH em que não há variações de previsão defasadas na equação de variância condicional - isto é, um GARCH (0, 1).
+ 
+Esta especificação é freqüentemente interpretada em um contexto financeiro, onde um agente prediz	a variação deste período formando uma média ponderada de uma média de longo prazo (a constante), a variância prevista do último período (o termo GARCH) e informações sobre volatilidade observada no período anterior (o termo ARCH).
+
+Se o retorno do ativo foi inesperadamente	grande no sentido ascendente ou descendente, o agente aumentará a	estimativa da variância para o próximo período. Este modelo também é consistente com o	cluster (aglomeração) de volatilidade, muitas vezes visto em dados de retornos financeiros, onde grandes mudanças nos retornos são	seguido por outras grandes mudanças.
+ 
+Modelos GARCH de ordem mais alta, denotados GARCH (p,q), podem ser estimados escolhendo tanto q ou p maior que 1, onde p está a ordem dos termos GARCH auto-regressivos e q é a ordem dos termos de média móvel do ARCH.
+
+Um GARCH (1,1) tem demonstrado ser muito útil para modelar retornos de ativos financeiros. Na prática, o GARCH (2,2) é estimado.
+
+<br>
+
+## Entrada de dados no R
+
+<br>
+
+``` {r econ9_1, warning=FALSE, message=FALSE }
+#Direcionado o R para o Diretorio a ser trabalhado
+setwd('C:/Users/Joao Ricardo Lima/Dropbox/tempecon/facape/econometria2')
+
+#Inicio do Script
+
+#Pacotes a serem usados
+library(forecast)
+library(ggplot2)
+#library(easyGgplot2)
+library(urca)
+library(stargazer)
+library(tseries)
+library(lmtest)
+library(ggthemes)
+library(zoo)
+library(xts)
+library(FinTS)
+library(scales)
+library(uroot)
+library(fGarch)
+
+options(digits=4)
+#options(scipen = 999)
+#options(scipen = 0)
+
+#Extracao dos dados
+dados <- read.csv2('dados_manga_tommy_semana.csv', header=T, sep=";", dec=".")
+#dados <- dados[,-c(9:10)] #retirar as ultimas colunas
+colnames(dados)[1]<-'produto'
+
+#Entrando dados no R - Deflator
+igpdi <- read.csv2('igpdi.csv', 
+                   header=T, sep=";",
+                   dec=".")
+
+#Juntando as duas bases de dados
+dados_comb<-cbind(dados, igpdi)
+
+#Retira variaveis desnecessarias
+dadost<-dados_comb[,-c(1,2,6,7)]
+
+#Deflacionar a serie de manga
+dadost$preco_def <- dadost[,3]*(tail(dadost[,4],1)/dadost[,4])
+
+
+#Analise de Serie Temporal
+preco_tommy <- dadost[,5]
+
+#Setando como serie temporal
+preco_tommy <- ts(preco_tommy, start=c(2012,1), freq=52)
+
+#Grafico da Série
+autoplot(preco_tommy, main='Evolução do preço semanal de Manga Tommy ao produtor do VSF') +
+  geom_line(colour="blue", size=1.0) + xlab('Semanas')+ ylab('Preço R$')
+```
+
+<br>
+
+## Análise da Raiz Unitária
+
+<br>
+
+``` {r econ9_2, warning=FALSE, message=FALSE }
+#Visualizando as correlações das series
+#INICIO DAS ANALISES PARA PREVISÃO
+ggtsdisplay(preco_tommy, main='Preco Semanal de Manga Tommy ao Produtor Vale - MI')
+
+#Teste de Raiz Unitaria na Serie
+#Verificacao da Estacionariedade das s?ries
+#Teste de raiz unitaria DF-GLS
+#Defini??o do numero m?ximo de lags
+print(12*(length(preco_tommy)/100)^(1/4))
+
+#Estatistica de Teste DFGLS para preco_tommy
+preco_tommyT.dfgls <- ur.ers(preco_tommy, type = c("DF-GLS"),
+                      model = c("trend"),
+                      lag.max = 17)
+summary(preco_tommyT.dfgls)
+
+#Teste de Raiz Unitaria Sazonal HEGY
+hegy.test(preco_tommy, deterministic = c(1,1,0), lag.method = "AIC")
+```
+
+<br>
+
+## Estimação do Modelo ARIMA e verificação de ARCH
+
+<br>
+
+``` {r econ9_3, warning=FALSE, message=FALSE }
+#Estimacao do Modelo Auto-ARIMA
+auto.arima <- auto.arima(preco_tommy, max.p=10, max.d=1, max.D=1, max.q=10, max.P=10, max.Q=10,
+                         seasonal = T, trace = TRUE)
+summary(auto.arima)
+coeftest(auto.arima)
+tsdiag(auto.arima)
+
+#Visualizando a correlação dos resíduos
+ggtsdisplay(auto.arima$residuals, main='Residuos dos ARIMA')
+
+#Teste de Ljung Box para autocorrelação nos resíduos
+#Hipotese nula do teste é que os residuos nao sao autocorrelacionados
+Box.test(auto.arima$residuals, lag=40,
+         type="Ljung-Box", fitdf=length(coef(auto.arima)))
+
+#Teste para verificar se os residuos seguem ARCH
+#H0: Não existe efeito ARCH 
+ArchTest(auto.arima$residuals, lags = 1, demean = TRUE)
+```
+
+<br>
+
+# Estimação do modelo ARCH
+
+<br>
+
+``` {r econ9_4, warning=FALSE, message=FALSE }
+arch01 <- garch(auto.arima$residuals, order = c(0,1), trace=FALSE)
+arch02 <- garch(auto.arima$residuals, order = c(0,2), trace=FALSE)
+arch03 <- garch(auto.arima$residuals, order = c(0,3), trace=FALSE)
+garch11 <- garch(auto.arima$residuals, order = c(1,1), trace=FALSE)
+garch22 <- garch(auto.arima$residuals, order = c(2,2), trace=FALSE)
+
+#Escolha do modelo ARCH com AICc - 
+N <- length(preco_tommy)
+loglik0 <- -0.5 * N * (1 + log(2 * pi * mean(auto.arima$residuals^2)))
+loglik1 <- logLik(arch01)
+loglik2 <- logLik(arch02)
+loglik3 <- logLik(arch03)
+loglik4 <- logLik(garch11)
+loglik5 <- logLik(garch22)
+
+loglik <- c(loglik0, loglik1, loglik2, loglik3, loglik4, loglik5)
+q <- c(0, 1, 2, 3, 4, 5)
+k <- q + 1
+aicc <- -2 * loglik  + 2 * k * N / (N - k - 1)
+aicc
+#stargazer(print(data.frame(q, loglik, aicc)))
+
+#Modelo Escolhido
+fit.arch <- garch(auto.arima$residuals, c(1, 1), trace=FALSE)
+summary(fit.arch)
+
+plot.ts(fit.arch$fitted.values)
+
+fit.garch <- garchFit(~garch(1,1), data = auto.arima$residuals, trace = F)
+summary(fit.garch)
+
+dados$resid<-auto.arima$residuals
+dados$ht <- fit.garch@h.t
+dados$date <- seq.Date(as.Date('2012-01-01'), by = 'week', length.out = length(preco_tommy))
+ggplot(dados, aes(y = ht, x = date)) + geom_line(col = '#ff9933') + ylab('Conditional Variance') + xlab('Date')
+
+#Diagnostico com os residuos do GARCH
+resid.garch <- residuals(fit.garch)
+plot(resid.garch, type="l", col=1)
+
+#Ver se os res?duos sao ruido branco
+ggtsdisplay(resid.garch, main='Residuos do GARCH')
+
+
+```
