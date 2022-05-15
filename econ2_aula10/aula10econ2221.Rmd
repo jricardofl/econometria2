@@ -1,0 +1,798 @@
+---
+title: "Aula 10 - Econometria de Séries Temporais"
+author: "João Ricardo F. de Lima"
+date: "`r format(Sys.time(), '%d de %B de %Y.')`"
+output: 
+    html_document:
+        theme: flatly
+        number_sections: yes
+        highlight: textmate
+#        includes: 
+#          in_header: "header.html"
+        toc: yes
+        toc_float:
+          collapsed: yes
+          smooth_scroll: yes 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 10, 
+  fig.height = 7,
+  fig.align  = "center",
+  comment    = "#",
+  size       = "normalsize"
+  )
+
+#Linhas precisam de ajuste semanal: 30, 104, 201, 204
+```
+
+<br>
+
+# Análise de Séries Temporais Multivariadas
+
+<br>
+
+Na análise univariada de séries temporais o objetivo era, basicamente, entender a dependência dinâmica de uma série $X_{t}$, isto é, a dependência de $X_{t}$ com os seus valores passados $(X_{t-1}, X_{t-2},...)$.
+
+Contudo, existem variáveis que são definidas dentro de um sistema e é um erro modelar estes processos de maneira puramente autorregressiva ou não controlando a dinâmica intertemporal: PIB, Consumo, Investimento, Gastos do Governo são definidos simultaneamente, por exemplo.  
+
+Essas questões, bastante pertinentes no dia a dia, são tratadas dentro da **análise multivariada de séries temporais**.
+
+São objetivos básicos da análise multivariada de séries temporais:
+
+1) Estudar as relações dinâmicas entre séries diversas;
+2) Melhorar as previsões sobre uma variável específica.
+
+Seja $z_{t} = (z_{1t}, z_{2t}, ..., z_{kt})^{'}$ um vetor de dimensão $k$ que contém séries temporais observadas em um período de tempo comum. Por exemplo, $z_{1t}$ é o PIB trimestral brasileiro e $z_{2t}$ é a taxa de desemprego também trimestral. 
+
+Estudando $z_{1t}$ e $z_{2t}$ conjuntamente, pode-se verificar a dependência contemporânea e passada que existe entre essas duas variáveis. Pode-se verificar o quanto um choque no PIB afeta a taxa de desemprego e quanto tempo isso tende a durar. Pode-se estar interessados na relação entre os desembolsos do BNDES e a taxa de investimento da economia brasileira. Será que aumentar os desembolsos ao banco eleva o investimento no país?
+
+<br>
+
+## Exemplo de séries que possuem correlação
+
+<br>
+
+``` {r econ10_1, warning=FALSE, message=FALSE }
+library(vars)
+library(aod)
+library(urca)
+library(stargazer)
+library(forecast)
+library(ggplot2)
+#library(ggthemr)
+library(gridExtra)
+library(readxl)
+library(scales)
+#ggthemr('light')
+
+# Os dados do BNDES estão em http://bit.ly/2pHg5wc. Depois de baixar e salvar na pasta correta, é importar os dados
+
+setwd('C:/Users/Joao Ricardo Lima/Dropbox/tempecon/facape/econometria2')
+
+data <- read_xls("bndes.xls", range = "AX5:AX264")
+colnames(data) <- "desembolso"
+data <- as.data.frame(data)
+
+#Retira os valores faltantes
+data <- na.omit(data)
+
+#Retira os somatórios
+data <- data[-c(13,13*2,13*3,13*4,13*5,13*6,13*7,13*8,13*9,13*10,13*11,
+                13*12,13*13,13*14,13*15,13*16,13*17,13*18),]
+
+data <- as.data.frame(data)
+
+#Seta como série temporal
+desembolso <- ts(data, start=c(2000,1), freq=12)
+
+#Limita até o final de 2016
+desembolso <- window(desembolso, end=c(2016,12))
+
+anual <- desembolso
+anual <- (anual+lag(anual,-1)+lag(anual,-2)+lag(anual,-3)+
+              lag(anual,-4)+lag(anual,-5)+lag(anual,-6)+
+              lag(anual,-7)+lag(anual,-8)+lag(anual,-9)+
+              lag(anual,-10)+lag(anual,-11))
+desembolso12 <- anual
+
+# Dados do PIB e da taxa de investimento
+
+data2 <- ts(read.csv2('data-1.csv', sep=';', dec=',')[,-1],
+            start=c(1996,4), freq=4)
+
+# Consolidando os dados
+bndes <- ts(aggregate(desembolso12, nfrequency = 4, FUN=mean),
+                start=c(2001,1), freq=4)
+
+# Juntando as bases de dados
+data <- ts.intersect(data2, bndes)
+data <- cbind(data[,3]/data[,1]*100, data[,2])
+colnames(data) <- c('BNDES', 'Investimento')
+
+#Plot dos dois gráficos
+g1 <- autoplot(data[,1])+
+  geom_line(size=.8, colour='darkblue')+
+  scale_x_discrete(limits=2001:2017)+
+  labs(title='Desembolsos do BNDES')+
+  xlab('')+ylab('% PIB')
+g2 <- autoplot(data[,2])+
+  geom_line(size=.8, colour='red')+
+  scale_x_discrete(limits=2001:2017)+
+  labs(title='Taxa de Investimento')+
+  xlab('')+ylab('% PIB')
+grid.arrange(g1, g2,
+             top = "",
+            layout_matrix = matrix(c(1,1,2,2), 
+                                   ncol=2, byrow=TRUE))
+
+# Correlação entre Desembolsos do BNDES vs. Taxa de Investimento
+dates <- seq(as.Date('2001-01-01'), as.Date('2016-12-01'), by='3 month')
+df <- data.frame(time=dates, bndes=data[,1], investimento=data[,2])
+ggplot(df, aes(bndes, investimento))+
+  geom_point(colour='black', size=5, shape=20)+
+  geom_smooth(method = 'lm')+
+  xlab('Desembolsos do BNDES')+
+  ylab('Taxa de Investimento')+
+  labs(title='Desembolsos do BNDES vs. Taxa de Investimento')
+
+cor(data)
+```
+
+<br>
+
+A correlação entre as variáveis é 0.87, bastante elevada. 
+
+<br>
+
+## Modelos Multivariados
+
+<br>
+
+Contudo, não é o bastante para se identificar a natureza da relação entre elas. Algumas questões devem ser levadas em consideração. Suponha que as series sejam estacionárias em nível. Pode-se, nesse caso, estimar um **Vetor Autoregressivo (VAR)** de primeira ordem, de modo que: 
+
+<br>
+
+$$
+FBCF_{t} = \delta_{1} + \gamma_{11}FBCF_{t-1} + \gamma_{12}BNDES_{t-1} + \varepsilon_{1t}
+$$
+
+<br>
+
+$$
+BNDES_{t} = \delta_{2} + \gamma_{21}BNDES_{t-1} + \gamma_{22}FBCF_{t-1} + \varepsilon_{2t}
+$$
+
+<br>
+
+### O Modelo VAR
+
+<br>
+
+O VAR(1) vai descrever a evolução dinâmica da interação entre a FBCF e os desembolsos do BNDES.
+
+O modelo VAR foi desenvolvido por Christopher Sims em um artigo publicado em 1980 na qual se propunha tratar todas as variáveis do sistema simetricamente, sem fazer hipótese sobre a estrutura de correlação entre elas.
+
+Uma vez estimado esse modelo, pode-se perguntar se existe causalidade nessa relação, isto é, se os desembolsos do BNDES de fato ajudam a prever a taxa de investimento, se o contrário ocorre ou se há uma simultaneidade. Nesse último caso, diz-se que existe uma causalidade bidirecional.
+
+Para definir o modelo VAR pode-se apresentar uma especificação bivariada simples. A idéia é que não sabendo se há causalidade mútua, se parte de um modelo em que as inovações contemporâneas de um processo afetam o outro.
+
+<br>
+
+$$
+y_{1,t}=\alpha_1-\delta_2y_{2,t}+\beta_1y_{1,t-1}+\beta_2y_{2,t-1}+\epsilon_{1,t}
+$$
+
+$$
+y_{2,t}=\alpha_2-\delta_1y_{1,t}+\beta_2y_{2,t-1}+\beta_1y_{1,t-1}+\epsilon_{2,t}
+$$
+<br>
+
+No sistema acima, os termos $y_{1,t}$ e $y_{2,t}$ representam a dinâmica contemporânea, relaxando a hipótese de restrição de *feedback*. 
+
+O modelo acima está no denominado modelo estrutural, devido a presença do termo contemporâneo no lado direito de cada equação.
+
+Para colocá-lo na forma reduzida, se escreve o modelo na forma matricial a partir do rearranjo;
+
+<br>
+$$
+y_{1,t}+\delta_2y_{2,t}=\alpha_1+\beta_1y_{1,t-1}+\beta_2y_{2,t-1}+\epsilon_{1,t}
+$$
+
+<br>
+$$
+y_{2,t}+\delta_1y_{1,t}=\alpha_2+\beta_2y_{2,t-1}+\beta_1y_{1,t-1}+\epsilon_{2,t}
+$$
+<br>
+a partir do qual se obtém:
+<br>
+
+$$
+\left[\begin{array}{cc}
+	1 & \delta_2\\
+	\delta_1 & 1
+	\end{array}\right] 	\left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_t = \left[\begin{array}{c}
+	\alpha_1\\
+	\alpha_2
+	\end{array}\right]+ \left[\begin{array}{cc}
+	\beta_1 & \beta_2 \\
+	\beta_2 & \beta_1
+	\end{array}\right] \left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_{t-1}+\left[\begin{array}{c}
+	\epsilon_1 \\
+	\epsilon_2
+	\end{array}\right]_t
+$$
+
+<br>
+
+que pode ser simplificado como
+
+<br>
+
+$$
+	Ay_t=\alpha+B^*y_{t-1}+\epsilon_t
+$$
+<br>
+
+se a equação acima for multiplicada pela inversa da Matriz A, ou seja,
+
+<br>
+
+$$
+A^{-1}=\left[\begin{array}{cc}
+	1 & \delta_2\\
+	\delta_1 & 1
+	\end{array}\right]^{-1}= 	\frac{1}{1-\delta_1\delta_2}\left[\begin{array}{cc}
+	1 & -\delta_1\\
+	-\delta_2 & 1
+	\end{array}\right]
+$$ 
+
+<br>
+
+De onde se obtém
+
+<br>
+$$
+y_t=a+By_{t-1}+e_t,
+$$
+
+<br>
+
+a chamada forma reduzida, em que $a=A^{-1}\alpha$, $B=A^{-1}B^*$ e $e_t=A^{-1}\epsilon_t$
+
+No Modelo VAR todas as variáveis são consideradas endógenas e determinadas de forma dinâmica pelos valores defasados. 
+
+Se tem uma equação para cada variável em função de seus valores defasados e dos valores defasados das outras variáveis. 
+
+Um VAR tem duas dimensões: 
+a) número de variáveis =k; 
+b)número de defasagens =p.
+
+O estimador de MQO pode ser aplicado a cada equação individualmente.
+
+Um modelo VAR precisa ser estável. A estabilidade do VAR é definida pelas suas raízes características. Se o VAR não for estável, não tem sentido ser estimado.
+
+A estabilidade de um VAR pode ser examinada calculando as raízes características de:
+
+<br>
+
+$$
+(I+B+B^2+ \dots+B^k)y_t=\sum_{i=0}^{\infty}B^i\epsilon_{t-1}
+$$
+<br>
+
+O polinômio característico é definido por 
+
+$$
+\Pi(z)=(I+B+B^2+ \dots+B^k)
+$$
+
+As raízes de $|\Pi(z)|=0$ informarão sobre o processo ser ou não ser estacionário.
+
+A condição necessária e suficiente para a estabilidade do VAR é que todas as raízes características estejam fora do círculo unitário.
+
+Estacionariedade e estabilidade são duas propriedades fortemente relacionadas. No caso de modelos VAR, tal relação se dá pelo fato de que modelos VAR estáveis são sempre estacionários.
+
+A negativa dessa informação não é verdadeira. Contudo, processos instáveis não tem interesse econômico.
+
+Considere o modelo abaixo:
+
+<br>
+
+$$
+\left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_t = \left[\begin{array}{c}
+	0.5\\
+	1.0
+	\end{array}\right]+ \left[\begin{array}{cc}
+	0.7 & 0.4 \\
+	0.2 & 0.3
+	\end{array}\right] \left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_{t-1}+\left[\begin{array}{c}
+	\epsilon_1 \\
+	\epsilon_2
+	\end{array}\right]_t
+$$
+<br>
+
+Este processo está simulado na figura abaixo:
+
+<br>
+
+``` {r econ10_2, warning=FALSE, message=FALSE }
+# pacotes necessários 
+library(dse)
+
+n <- 500
+r <- 0.7
+set.seed(1)
+Z1 <- rnorm(n)
+Z2 <- rnorm(n)
+
+E1 <- Z1
+E2 <- r*Z1 + sqrt(1-r^2)*Z2
+
+A <- matrix(c(.7,.2,.4,.3),2,2)
+
+y_1 = y_2 <- rep(0,n)
+for(t in 2:n){
+  y_1[t] <- A[1,1]*y_1[t-1] + A[1,2]*y_2[t-1] + E1[t]
+  y_2[t] <- A[2,1]*y_1[t-1] + A[2,2]*y_2[t-1] + E2[t]
+}
+
+# Figura 8.1
+plot(y_1, type = "l", lty = 1, ylim = c(-6,6), ann = FALSE)
+lines(y_2,lty = 3, col = "red")
+```
+
+<br>
+
+Estes processos apresentam dinâmica comum. É dito estável. 
+
+Para obter um processo não estável basta que as raízes sejam unitárias:
+
+<br>
+
+$$
+\left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_t =  \left[\begin{array}{cc}
+	1 & 0 \\
+	0 & 1
+	\end{array}\right] \left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_{t-1}+\left[\begin{array}{c}
+	\epsilon_1 \\
+	\epsilon_2
+	\end{array}\right]_t
+$$
+
+<br>
+
+Este processo está simulado na figura abaixo:
+
+<br>
+
+``` {r econ10_3, warning=FALSE, message=FALSE }
+# A outra  matriz "A" abaixo gera o processo do sistema (8.14).
+
+A = matrix(c(1,0,0,1),2,2)
+
+y_3 = y_4 <- rep(0,n)
+
+for(t in 2:n){
+   y_3[t] <- A[1,1]*y_3[t-1] + A[1,2]*y_4[t-1] + E1[t]
+   y_4[t] <- A[2,1]*y_3[t-1] + A[2,2]*y_4[t-1] + E2[t]
+}
+ 
+# # Figura 8.2
+plot(y_3, type = "l", lty = 1, ylim = c(-15,20), ann = FALSE)
+ lines(y_4,lty = 3, col = "red")
+```
+
+<br>
+
+Estes processos não apresentam dinâmica comum, tendem a se descolar. É dito instável.
+
+<br>
+
+### Determinação da ordem de defasagem
+
+<br>
+
+Uma vez de posse dos nossos dados, já devidamente tratados, um problema imediato é determinar a ordem $p$ de defasagem do nosso modelo. Isso é feito empiricamente pela análise de **critérios de informação**. Os mais conhecidos são os critérios de Akaike, Hannan-Quinn e Schwarz, sendo determinado como se segue:
+
+$$
+AIC(p) = log det (\Sigma_{u}(p)) + \frac{2}{T} p K^{2}
+$$ 
+
+$$
+HQ(p) = log det (\Sigma_{u}(p)) + \frac{2log(log(T))}{T} p K^{2}
+$$
+
+$$
+SC(p) = log det (\Sigma_{u}(p)) + \frac{log(T)}{T} p K^{2} 
+$$
+onde $\Sigma_{u}(p) = T^{-1}\sum_{t=1}^{T} \hat{u_{t}} {\hat{u}_{t}}'$.
+No R esses critérios estão implementados na função `VARselect` do pacote `vars`.
+
+<br>
+
+A determinação do lag é dada por:
+  
+<br>
+
+``` {r econ10_4, warning=FALSE, message=FALSE }
+# Estruturação dados com como um objeto "ts" e ajuste em um modelo VAR.
+data <- as.ts(cbind(y_1,y_2))
+
+# Estimação da número de lags e do processo
+VARselect(data, lag.max = 6, type = "none")
+```
+
+<br>
+  
+A primeira parte da saída indica o número ótimo de defasagens para cada critério, seguido pela tabela com o valor de cada um para cada defasagem.
+
+A melhor defasagem é dada pelo menor valor do critério. Isto é tudo que se precisa para estimar um modelo VAR.
+
+<br>
+  
+### Estimação do Modelo VAR(1)
+  
+<br>
+  
+O modelo VAR (1) estimado pelo método dos Mínimos Quadrados Ordinários é:
+  
+<br>
+  
+``` {r econ10_5, warning=FALSE, message=FALSE }
+# Estruturação dados com como um objeto "ts" e ajuste em um modelo VAR.
+(model1 <- VAR(data, p = 1, type = "none"))
+```
+
+<br>
+
+Abaixo são apresentados os testes de autocorrelação, o de heterocedasticidade e os autovalores para verificar a estabilidade. 
+
+<br>
+
+``` {r econ10_6, warning=FALSE, message=FALSE }
+# Diagnóstico 
+
+serial.test(model1)
+arch.test(model1)
+vars::roots(model1)
+
+# guardar autovalores do processo
+autoval <- vars::roots(model1)
+
+# Figura 
+x <- seq(-1,1,length = 1000)
+y1 <- sqrt(1-x^2)
+y2 <- -sqrt(1-x^2)
+plot(c(x,x),c(y1,y2),xlab='Parte Real',ylab='Parte Complexa',type='l',main='Circulo Unitario',ylim=c(-2,2),xlim=c(-2,2))
+abline(h = 0)
+abline(v = 0)
+points(autoval, Im(autoval),pch=19)
+legend(-2.0,-1.5,legend="Autovalores",pch=19)
+```
+
+<br>
+
+### Função Impulso Resposta
+
+<br>
+
+Como visto, a modelagem VAR procura identificar a relação dinâmica existente em um conjunto previamente definido de variáveis.
+
+Dentro desse tipo de abordagem, pode ser interessante para o pesquisador verificar o impacto de um **choque** ou **impulso** em uma variável sobre as outras.
+
+Esse tipo de exercício é conhecido na literatura como **análise de impulso-resposta**. A ideia é verificar a resposta esperada na variável $y_{i,t+s}$ da mudança em uma unidade na variável $y_{j,t}$.
+
+Em outras palavras, dá-se um choque em $t$ na variável $y_{j}$ e observa-se o efeito desse choque sobre a variável $y_{i}$ ao longo de $t+s$. Esses efeitos, ademais, podem ser acumulados.
+
+<br>
+
+Considere as equações já vistas anteriormente
+
+<br>
+
+$$
+y_{1,t}=\alpha_1-\delta_2y_{2,t}+\beta_1y_{1,t-1}+\beta_2y_{2,t-1}+\epsilon_{1,t}
+$$
+
+<br>
+
+$$
+y_{2,t}=\alpha_2-\delta_1y_{1,t}+\beta_2y_{2,t-1}+\beta_1y_{1,t-1}+\epsilon_{2,t}
+$$
+
+<br>
+
+Se forem reescritas na forma matriz como um processo de médias móveis, tem-se
+
+<br>
+
+$$
+\left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_t =  \left[\begin{array}{c}
+	\bar{y}_1  \\
+	\bar{y}_2 
+	\end{array}\right] \sum_{i=0}^{\infty}B^i +\left[\begin{array}{c}
+	\epsilon_1 \\
+	\epsilon_2
+	\end{array}\right]_{t-1}
+$$
+Como o termo de erro é dado por
+
+$$
+\left[\begin{array}{c}
+	e_1 \\
+	e_2
+	\end{array}\right]_{t-1}= 	\frac{1}{1-\delta_1\delta_2}\left[\begin{array}{cc}
+	1 & -\delta_1\\
+	-\delta_2 & 1
+	\end{array}\right]\left[\begin{array}{c}
+	\epsilon_1 \\
+	\epsilon_2
+	\end{array}\right]_{t-1}
+$$
+
+<br>
+
+Se tem 
+
+
+<br>
+
+$$
+\left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_t =  \left[\begin{array}{c}
+	\bar{y}_1  \\
+	\bar{y}_2 
+	\end{array}\right]+ \frac{1}{1-\delta_1\delta_2}\sum_{i=0}^{\infty}B^i \left[\begin{array}{cc}
+	1 & -\delta_1\\
+	-\delta_2 & 1
+	\end{array}\right]\left[\begin{array}{c}
+	\epsilon_1 \\
+	\epsilon_2
+	\end{array}\right]_{t-1}
+$$
+<br>
+
+Que pode ser rearranjado para 
+
+$$
+	\left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_t =  \left[\begin{array}{c}
+	\bar{y}_1  \\
+	\bar{y}_2 
+	\end{array}\right]+ \sum_{i=0}^{\infty} \left[\begin{array}{cc}
+	\phi_{1,1}(i) & \phi_{1,2}(i)\\
+	\phi_{2,1}(i) & \phi_{2,2}(i)
+	\end{array}\right]\left[\begin{array}{c}
+	\epsilon_1 \\
+	\epsilon_2
+	\end{array}\right]_{t-1}
+$$
+
+Onde cada $\phi_{i,j}$ é uma função de impulso-resposta e seu gráfico é uma maneira prática de visualizar o comportamento de choques entre as variáveis do modelo. 
+
+Em modelos estáveis, espera-se que as respostas a esses choques, que chamam impulsos, convirjam para zero em tempo finito, preferencialmente em poucos lags.
+
+Vale observar que $\phi_{i,j}(0)$, a resposta instantânea, é chamado de multiplicar de choque.
+
+O gráfico de $\phi_{i,j}(t)$ é formado por uma sequência de valores de tempo (i.e, t=0,1,2,...,n) assumindo na ultima equação do slide anterior que $e_t=1$.
+
+Dessa maneira, a interpretação se inicia assumindo um choque de uma unidade na variável j, com a respectiva resposta na variável "i" dada pelo comportamento gráfico.
+
+<br>
+
+``` {r econ10_7, warning=FALSE, message=FALSE }
+# Função impulso-resposta 
+# FIR, PREVISAO E DECOMPOSICAO
+
+# Elaboração da Figura 
+
+# resposta do choque em y1
+model1.irf <- irf(model1, impulse = "y_1", n.ahead = 40, boot = TRUE)
+# resposta do choque em y2
+model2.irf <- irf(model1, impulse = "y_2", n.ahead = 40, boot = TRUE)
+
+par(mfcol=c(2,2), mar=c(0,4,0,0), oma=c(5,3,5,3))
+
+# Figura (a)
+plot.ts(model1.irf$irf$y_1[,1], axes=F, oma.multi = c(0,0,5,0),
+        ylab='y_1', ylim=c(-0,1))
+lines(model1.irf$Lower$y_1[,1], lty=2, col='red')
+lines(model1.irf$Upper$y_1[,1], lty=2, col='red')
+axis(side=2, las=2, ylab='')
+abline(h=0, col='red')
+box()
+mtext("Resposta do Choque em y_1", line = 2)
+
+plot.ts(model1.irf$irf$y_1[,2], axes=F, oma.multi = c(0,0,5,0),
+        ylab='y_2', ylim=c(-0,1))
+lines(model1.irf$Lower$y_1[,2], lty=2, col='red')
+lines(model1.irf$Upper$y_1[,2], lty=2, col='red')
+axis(side=1, las=1)
+axis(side=2, las=2)
+abline(h=0, col='red')
+box()
+mtext("95% Bootstrap CI, 100 runs", side=1, line = 3)
+
+# Figura (b)
+plot.ts(model2.irf$irf$y_2[,1], axes=F, oma.multi = c(0,0,5,0),
+        ylab='', ylim=c(-0,1))
+lines(model2.irf$Lower$y_2[,1], lty=2, col='red')
+lines(model2.irf$Upper$y_2[,1], lty=2, col='red')
+axis(side=2, las=2, ylab='')
+abline(h=0, col='red')
+box()
+mtext("Resposta do Choque em y_2", line = 2)
+
+plot.ts(model2.irf$irf$y_2[,2], axes=F, oma.multi = c(0,0,5,0),
+        ylab='', ylim=c(-0,1))
+lines(model2.irf$Lower$y_2[,2], lty=2, col='red')
+lines(model2.irf$Upper$y_2[,2], lty=2, col='red')
+axis(side=1, las=1)
+axis(side=2, las=2)
+abline(h=0, col='red')
+box()
+mtext("95% Bootstrap CI, 100 runs", side=1, line = 3)
+
+
+# Elaboração da Figura
+
+# resposta do choque em y1
+model1.irf <- irf(model1, impulse = "y_1", n.ahead = 40, boot = TRUE, cumulative = T)
+# resposta do choque em y2
+model2.irf <- irf(model1, impulse = "y_2", n.ahead = 40, boot = TRUE, cumulative = T)
+
+par(mfcol=c(2,2), mar=c(0,4,0,0), oma=c(5,3,5,3))
+
+# Figura (a)
+plot.ts(model1.irf$irf$y_1[,1], axes=F, oma.multi = c(0,0,5,0),
+        ylab='y_1', ylim=c(-0,8))
+lines(model1.irf$Lower$y_1[,1], lty=2, col='red')
+lines(model1.irf$Upper$y_1[,1], lty=2, col='red')
+axis(side=2, las=2, ylab='')
+abline(h=0, col='red')
+box()
+mtext("Cumulative Response from y_1", line = 2)
+
+plot.ts(model1.irf$irf$y_1[,2], axes=F, oma.multi = c(0,0,5,0),
+        ylab='y_2', ylim=c(-0,8))
+lines(model1.irf$Lower$y_1[,2], lty=2, col='red')
+lines(model1.irf$Upper$y_1[,2], lty=2, col='red')
+axis(side=1, las=1)
+axis(side=2, las=2)
+abline(h=0, col='red')
+box()
+mtext("95% Bootstrap CI, 100 runs", side=1, line = 3)
+
+# Figura (b)
+plot.ts(model2.irf$irf$y_2[,1], axes=F, oma.multi = c(0,0,5,0),
+        ylab='', ylim=c(-0,8))
+lines(model2.irf$Lower$y_2[,1], lty=2, col='red')
+lines(model2.irf$Upper$y_2[,1], lty=2, col='red')
+axis(side=2, las=2, ylab='')
+abline(h=0, col='red')
+box()
+mtext("Cumulative Response from y_2", line = 2)
+
+plot.ts(model2.irf$irf$y_2[,2], axes=F, oma.multi = c(0,0,5,0),
+        ylab='', ylim=c(-0,8))
+lines(model2.irf$Lower$y_2[,2], lty=2, col='red')
+lines(model2.irf$Upper$y_2[,2], lty=2, col='red')
+axis(side=1, las=1)
+axis(side=2, las=2)
+abline(h=0, col='red')
+box()
+mtext("95% Bootstrap CI, 100 runs", side=1, line = 3)
+```
+
+<br>
+
+### Decomposição da variância
+
+<br>
+
+Um último tópico importante é a decomposição de variância, isto é, o quanto da variância de uma variável do nosso conjunto é explicado pelas demais variáveis. No R, ela é implementada com a função ``fevd``.
+
+Em linhas gerais, a função retorna o quanto a variação (percentual) do erro de previsão é atribuída a cada variável para uma sequencia de valores no tempo.
+
+A variância total dos erros de previsão é decomposta em duas componentes, neste caso em análise, uma relacionada com $y_1$ e a outra com $y_2$.
+
+Na prática, esta análise nos ajuda a verificar quais variáveis são realmente importantes quando o objetivo é realizar previsões.
+
+Quanto maior for a contribuição percentual de uma variável para a variação total da outra, mais importante ela é para se realizar boas previsões da variável da qual realiza-se a decomposição. 
+
+<br>
+
+``` {r econ10_8, warning=FALSE, message=FALSE }
+# Decomposição da variância 
+
+fevd.model1 <- fevd(model1, n.ahead = 7)
+plot(fevd.model1, main="")
+```
+
+<br>
+
+Os choques em $y_1$ afetam mais $y_1$ do que $y_2$. Já no caso de choque em $y_2$, tem bastante efeito em $y_1$.
+
+<br>
+
+## Previsão no Modelo VAR
+
+<br>
+
+No R, duas maneiras para gerar previsões estão implantadas em predict() e fanchart(), a primeira retorna os pontos médios dos intervalos de confiança para cada previsão enquanto a segunda produz os intervalos como áreas sombreadas.
+
+``` {r econ10_9, warning=FALSE, message=FALSE }
+# Previsões
+
+#  previsão a partir de 'fanchart'
+model1.y_1 <- predict(model1, n.ahead = 10, ci = 0.95)
+fanchart(model1.y_1, xlim = c(450,505), main = c("Fanchart de y_1", "Fanchart de y_2"))
+plot(model1.y_1)
+```
+
+<br>
+
+## Teste de Causalidade de Granger
+
+O termo "causalidade de Granger" significa que há uma relação de antecedência-defasagem entre as variáveis de séries de tempo multivariadas. Em outras palavras, uma variável x vai ser dita que causa Granger em uma variável y, se os valores passados de x e valores passados de y forem úteis para prever y.
+
+Testa se uma variável endógena pode ser tratada como exógena. Para cada equação do VAR, é calculado uma estatística de $\chi^2$ para a significância conjunta de cada uma das variáveis endógenas defasadas na equação.
+
+A estimação do VAR deve ser feita antes do teste de causalidade de Granger, uma vez que a análise está verificando a causalidade entre várias variáveis.
+
+Testa-se a hipótese nula de que os coeficientes estimados da variável exogena defasada são conjuntamente iguais à zero. Não rejeitar essa possibilidade é equivalente a não rejeitar a hipótese de que a variável Y não causa a Granger a variável X.
+
+São estimadas regressões bivariadas na forma:
+
+$$
+y_t=\alpha_{0}+\alpha_{1}y_{t-1}+\dots+\beta_1x_{t-1}+\dots+\varepsilon_t
+$$
+
+$$
+x_t=\alpha_{0}+\alpha_{1}x_{t-1}+\dots+\beta_1y_{t-1}+\dots+\mu_t
+$$
+para todos os possíveis pares de variáveis endógenas. O teste realizado conjuntamente, para cada equação, é:
+
+$$
+\beta_1=\beta_2=\dots=0
+$$
+
+As hipóteses nulas são que x não causa a Granger y na primeira equação e que y não causa a Granger x na segunda regressão.
+
+``` {r econ10_10, warning=FALSE, message=FALSE }
+# Causalidade de Granger
+causality(model1)$Granger
+```
+<br>
