@@ -1,0 +1,480 @@
+---
+title: "Aula 11 - Econometria de Séries Temporais"
+author: "João Ricardo F. de Lima"
+date: "`r format(Sys.time(), '%d de %B de %Y.')`"
+output: 
+    html_document:
+        theme: flatly
+        number_sections: yes
+        highlight: textmate
+#        includes: 
+#          in_header: "header.html"
+        toc: yes
+        toc_float:
+          collapsed: yes
+          smooth_scroll: yes 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 10, 
+  fig.height = 7,
+  fig.align  = "center",
+  comment    = "#",
+  size       = "normalsize"
+  )
+
+#Linhas precisam de ajuste semanal: 30, 104, 201, 204
+```
+
+<br>
+
+# VAR ESTRUTURAL
+
+<br>
+
+A abordagem estrutural para o modelo VAR (VAR Estrutural) permite a análise de relações contemporâneas entre as variáveis estabelecidas com base na teoria econômica. É necessário desenvolver modelo teórico que forneça embasamento das hipóteses que fundamentam as restrições a serem impostas nas relações contemporâneas e que levam à identificação do modelo empírico permitindo sua estimação. 
+
+Relembrando o Modelo VAR, tem-se:
+
+Para definir o modelo VAR pode-se apresentar uma especificação bivariada simples. A idéia é que não sabendo se há causalidade mútua, se parte de um modelo em que as inovações contemporâneas de um processo afetam o outro.
+
+<br>
+
+$$
+y_{1,t}=\alpha_1-\delta_2y_{2,t}+\beta_1y_{1,t-1}+\beta_2y_{2,t-1}+\epsilon_{1,t}
+$$
+
+$$
+y_{2,t}=\alpha_2-\delta_1y_{1,t}+\beta_2y_{2,t-1}+\beta_1y_{1,t-1}+\epsilon_{2,t}
+$$
+<br>
+
+No sistema acima, os termos $y_{1,t}$ e $y_{2,t}$ representam a dinâmica contemporânea, relaxando a hipótese de restrição de *feedback*. 
+
+O modelo acima está no denominado modelo estrutural, devido a presença do termo contemporâneo no lado direito de cada equação.
+
+Para colocá-lo na forma reduzida, se escreve o modelo na forma matricial a partir do rearranjo;
+
+<br>
+$$
+y_{1,t}+\delta_2y_{2,t}=\alpha_1+\beta_1y_{1,t-1}+\beta_2y_{2,t-1}+\epsilon_{1,t}
+$$
+
+<br>
+$$
+y_{2,t}+\delta_1y_{1,t}=\alpha_2+\beta_2y_{2,t-1}+\beta_1y_{1,t-1}+\epsilon_{2,t}
+$$
+<br>
+a partir do qual se obtém:
+<br>
+
+$$
+\left[\begin{array}{cc}
+	1 & \delta_2\\
+	\delta_1 & 1
+	\end{array}\right] 	\left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_t = \left[\begin{array}{c}
+	\alpha_1\\
+	\alpha_2
+	\end{array}\right]+ \left[\begin{array}{cc}
+	\beta_1 & \beta_2 \\
+	\beta_2 & \beta_1
+	\end{array}\right] \left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_{t-1}+\left[\begin{array}{c}
+	\epsilon_1 \\
+	\epsilon_2
+	\end{array}\right]_t
+$$
+
+<br>
+
+que pode ser simplificado como
+
+<br>
+
+$$
+	Ay_t=\alpha+B^*y_{t-1}+\epsilon_t
+$$
+<br>
+
+se a equação acima for multiplicada pela inversa da Matriz A, ou seja,
+
+<br>
+
+$$
+A^{-1}=\left[\begin{array}{cc}
+	1 & \delta_2\\
+	\delta_1 & 1
+	\end{array}\right]^{-1}= 	\frac{1}{1-\delta_1\delta_2}\left[\begin{array}{cc}
+	1 & -\delta_1\\
+	-\delta_2 & 1
+	\end{array}\right]
+$$ 
+
+<br>
+
+De onde se obtém
+
+<br>
+
+$$
+y_t=a+By_{t-1}+e_t,
+$$
+
+<br>
+
+a chamada forma reduzida, em que $a=A^{-1}\alpha$, $B=A^{-1}B^*$ e $e_t=A^{-1}\epsilon_t$
+
+Apesar do modelo VAR conseguir captar as características dinâmicas de séries temporais multivariadas, identifica-se a necessidade de transformar a matriz de variância e covariâncias dos erros para se ter choques ortogonais, isto é, não correlacionados, para a análise correta das funções de impulso-resposta e decomposição do erro de previsão.
+
+Quando os erros são contemporaneamente correlacionados os coeficientes não refletem de forma adequada os efeitos dos choques nas variáveis do sistema. Assim, os erros devem ser ortogonalizados de modo a apresentarem matriz de variâncias e covariâncias diagonal (ausência de covariância). 
+
+A ortogonalização consiste em uma transformação dos erros gerando outro vetor de erros com matriz de variâncias e covariâncias diagonal. No entanto, esta transformação envolve modificar todo o modelo o que traz consequências para o relacionamento contemporâneo entre as variáveis.
+
+Considere $e_t$ os choques/inovações originais do VAR (erros correlacionados): 
+
+$$
+Var-Cov(e_t) = E(e_te_t')= \Omega
+$$
+<br>
+
+$$
+\Omega = \left[\begin{array}{cc}
+	Var(e_1) & Cov(e_1e_2) \\
+	 Cov(e_1e_2) & Var(e_2)
+	\end{array}\right] =\left[\begin{array}{cc}
+	\sigma^2_1 & \sigma_{12} \\
+	\sigma_{21} & \sigma^2_2
+	\end{array}\right]
+$$
+<br>
+
+<br>
+
+É necessária um transformação em $e_t$, multiplicando o por uma matriz P:
+
+<br>
+
+$$
+\mu_t=Pe_t,
+$$
+<br>
+
+$$
+\mu_t = \left[\begin{array}{c}
+	P
+	\end{array}\right]\left[\begin{array}{c}
+	e_{1t} \\
+	e_{2t}
+	\end{array}\right]
+$$
+<br>
+
+$$
+Var-Cov(\mu_t)=E(\mu_t\mu_t')=E(Pe_te_t'P')
+$$
+<br>
+
+onde $e_te_t'$ é a variancia-covariância
+
+<br>
+
+$$
+E(Pe_te_t'P') = E(P \Omega P')=\Sigma(diagonal)
+$$
+<br>
+
+$$
+Var-Cov(\mu_t)= \left[\begin{array}{cc}
+	Var(\mu_1) & 0 \\
+	 0 & Var(\mu_2)
+	\end{array}\right]
+$$
+<br>
+
+Esta matriz P tem algumas características:
+
+a) Quadrada com dimensão igual ao número de equações/variáveis
+
+b) Tem que ter determinante diferente de zero (não singular)
+
+c) Fornecer uma $\mu_t$ ortogonal
+
+Quando se multiplica o modelo VAR por P se tem um novo modelo, com um novo erro $\mu_t$ e com o lado esquerdo da equação incorporando relações contemporâneas entre as variáveis do sistema. Tal modelo é conhecido como VAR Estrutural que permite a análise de funções impulso-resposta ortogonais, decomposição da variância do erro de previsão e estimativas de coeficientes de relações contemporâneas entre as variáveis. 
+
+Existem várias opções de P. Uma delas é a **Decomposição de Cholesky**. Qual a necessidade de fazer decomposição de Cholesky? Observe que na forma estrutural existem 10 parametros para serem estimados: 8 coeficientes e mais 2 variâncias de erros. 
+
+<br>
+
+$$
+\left[\begin{array}{cc}
+	1 & \delta_2\\
+	\delta_1 & 1
+	\end{array}\right] 	\left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_t = \left[\begin{array}{c}
+	\alpha_1\\
+	\alpha_2
+	\end{array}\right]+ \left[\begin{array}{cc}
+	\beta_1 & \beta_2 \\
+	\beta_2 & \beta_1
+	\end{array}\right] \left[\begin{array}{c}
+	y_1 \\
+	y_2
+	\end{array}\right]_{t-1}+\left[\begin{array}{c}
+	\epsilon_1 \\
+	\epsilon_2
+	\end{array}\right]_t
+$$
+<br>
+
+Contudo, na forma reduzida do Modelo VAR apenas 6 parâmetros (a=2; B=4) podem ser estimados além da $Var(\epsilon_1)$, da $Var(\epsilon_2)$ e a $Cov(\epsilon_1,\epsilon_2)$. Isto gera um problema de **identificação**, as estimativas do modelo estrutural não podem ser recuperadas com as estimativas do modelo reduzido. 
+
+<br>
+$$
+y_t=a+By_{t-1}+e_t,
+$$
+
+<br>
+
+em que $a=A^{-1}\alpha$, $B=A^{-1}B^*$ e $e_t=A^{-1}\epsilon_t$.
+
+Para se ter **identificação** é preciso impor restrições no sistema estrutural. O número de restrições necessário para alcançar identificação depende da relação entre o número de coeficientes estimados na forma reduzida e o número de coeficientes a serem obtidos na forma estrutural; é um problema de número de incógnitas e de número de equações (relações). 
+
+Uma solução para isto é usar a decomposição de Cholesky forçando que o triangulo superir seja igual a zero. Contudo, com dados reais o recomendado é que se use a Teoria Econômica para definir as restrições. 
+
+<br>
+
+## Identificação
+
+<br>
+
+Para estimar o SVAR tem-se que resolver primeiro o problema de identificação. Considere o modelo SVAR sem intercepto
+
+<br>
+
+$$
+	AY_t=\sum AY_{t-1}+Bu_t
+$$
+<br>
+
+Se multiplicarmos tudo por $A^{-1}$, tem-se 
+
+<br>
+
+$$
+Y_t=\sum \Phi Y_{t-1}+a_t
+$$
+<br>
+
+em que $a_t=A^{-1}Bu_t$ ou $Aa_t=Bu_t$, um VAR padrão. Observe que $a_t$ são os erros do modelo VAR na sua forma reduzida (correlacionados) enquanto que $u_t$ são os erros da forma estrutural (não correlacionados).
+
+Para conseguir a partir das estimativas da matriz de variância e covariância de $a$ obter as estimativas dos coeficientes de **A** e **B** do modelo estrutural é preciso impor restrições nas matrizes **A** e **B**. O número de restrições necessário para alcançar identificação depende da relação entre o número de coeficientes estimados na forma reduzida e o número de coeficientes a serem obtidos na forma estrutural. É um problema de número de incógnitas e de número de equações (relações) semelhante à condição de ordem em equações simultâneas.
+
+Elementos a serem identificados: Temos $k^2$  elementos de A mais k elementos da matriz B (diagonal) de variâncias dos erros do modelo estrutural, dando um total de  $k^2+k$. Contudo, impondo-se a restrição de que a matriz de relações contemporâneas tenha $1's$  na diagonal, tem-se $(k^2-k)+k=k^2$ valores desconhecidos no modelo estrutural. 
+
+Elementos observados/estimados: São os valores da matriz de variâncias e covariâncias dos erros $(\hat \Omega)$ do modelo VAR padrão (forma reduzida). Esta matriz é simétrica e terá $(k^2+k)/2$ elementos livres. 
+
+Identificação: Para identificar $(k^2)$  coeficientes desconhecidos a partir dos $(k^2+k)/2$ valores de $(\hat \Omega)$, será necessário impor $k^2-[(k^2+k)/2]=(k^2-k)/2$ restrições adicionais no sistema. 
+
+As restrições são impostas na matriz $A$. Para a maioria dos problemas são restrições de exclusão com zeros nas posições que representam ausência de relação contemporânea, ou seja, nas posições de coeficientes que não serão estimados. 
+
+Três situações com relação à condição de identificação do sistema: 
+
+a)	Sistema exatamente identificado – quando o número de restrições em $A$ for igual a (k^2-k)/2,
+
+b)	Sistema superidentificado – quando o número de restrições for maior que $(k^2-k)/2$,
+
+c)	Sistema subidentificado- quando o número de restrições for menor que $(k^2-k)/2)$.
+
+O sistema estrutural é estimável ou identificado quando for exatamente identificado ou superidentificado. 
+
+Com base em $Aa_t=Bu_t$ e dependendo das restrições impostas, três tipos de modelos SVAR podem ser definidos:
+
+<br>
+
+**MODELO A**
+
+<br>
+
+Neste modelo a idéia é modelar as relações contemporâneas entre as variáveis diretamente pela matriz $A$ considerando $B=I_k$, isto é:
+
+<br>
+
+$$
+Aa_t=u_t
+$$
+<br>
+
+o que reduz o número de valores desconhecidos de $2k^2$ para $k^2$, pois só tem-se a matriz A a ser identificada. Assim, o número mínimo de restrições para identificação será $k(k−1)/2$.
+
+<br>
+
+**MODELO B**
+
+<br>
+
+Neste modelo, ao invés de modelar diretamente as relações contemporâneas entre as variáveis, especifica-se as relações entre os erros identificando-se os choques estruturais diretamente pelos choques da forma reduzida. A matriz $A$ é considerada identidade, isto é, $A=I_k$. Logo,
+
+$$
+a_t=Bu_t
+$$
+<br>
+
+Ou seja, os erros da forma reduzida são funções lineares dos erros estruturais. O número mínimo de restrições para identificação também é $k(k−1)/2$.
+
+<br>
+
+**MODELO AB**
+<br>
+
+É o modelo que considera os dois tipos de restrições simultâneamente, ou seja:
+
+$$
+Aa_t=Bu_t
+$$
+
+Como A e B têm $k^2$ elementos cada, tem-se que impor no mínimo $k2+k(k−1)/2$ restrições para identificação.
+
+<br>
+
+## Restrições de longo prazo à la Blanchard-Quah
+
+<br>
+
+Blanchard e Quah (1989) propõem uma abordagem, que não requer a imposição direta de restrições nas matrizes estruturais A ou B. Em vez disso, as inovações estruturais podem ser identificadas observando os efeitos acumulados dos choques e colocando zero restrições nessas relações acumuladas, que morrem e se tornam zero no longo prazo.
+
+# Estimação
+
+## Dados
+
+Para esta ilustração geramos um conjunto de dados artificiais com três variáveis endógenas, que seguem o processo de geração de dados
+
+
+$$
+y_t = A_1Y_{t-1}+B \epsilon_t
+$$
+
+onde,
+
+$$
+A=\left[\begin{array}{ccc}
+	0.3 & 0.12 &0.69\\
+	0 & 0.3 & 0.48 \\
+	0.24 & 0.24 & 0.3
+	\end{array}\right];
+$$
+
+$$
+B=\left[\begin{array}{ccc}
+	1 & 0 &0\\
+	-0,14 & 1 & 0 \\
+	-0.06 & 0.39 & 1
+	\end{array}\right];
+$$
+$$
+\epsilon_t \sim N(0,I_3)
+$$
+
+<br>
+
+O pacote ``vars``  (Pfaff, 2008) fornece funções para estimar VARs estruturais em R. O workflow é dividido em duas etapas, onde a primeira consiste em estimar um modelo VAR padrão usando a função VAR.
+
+<br>
+
+```{r econ11_1, warning=FALSE, message=FALSE }
+# https://www.r-econometrics.com/timeseries/svarintro/
+
+library(vars)
+
+# Reset random number generator for reproducibility
+set.seed(24579)
+
+tt <- 500 # Number of time series observations
+
+# Coefficient matrix
+A_1 <- matrix(c(0.3, 0, 0.24,
+                0.12, 0.3, 0.24,
+                0.69, 0.48, 0.3), 3)
+
+# Structural coefficients
+B <- diag(1, 3)
+B[lower.tri(B)] <- c(-0.14, -0.06, 0.39)
+
+# Generate series
+series <- matrix(rnorm(3, 0, 1), 3, tt + 1) # Raw series with zeros
+for (i in 2:(tt + 1)){
+  series[, i] <- A_1 %*% series[, i - 1] +  B %*% rnorm(3, 0, 1)
+}
+
+series <- ts(t(series)) # Convert to time series object
+dimnames(series)[[2]] <- c("S1", "S2", "S3") # Rename variables
+
+# Plot the series
+plot.ts(series, main = "Artificial time series")
+
+# Estimate reduced form VAR
+var_est <- VAR(series, p = 1, type = "none")
+
+var_est
+```
+
+<br>
+
+Os coeficientes estimados estão razoavelmente próximos dos coeficientes verdadeiros. Na próxima etapa o objeto resultante é utilizado na função SVAR para estimar os diversos modelos estruturais.
+
+**Modelo A**
+
+O modelo A requer a especificação de uma matriz Amat, que contém as restrições $K(K−1)/2$. No exemplo a seguir, cria-ses uma matriz diagonal com uns como elementos diagonais e zeros em seu triângulo superior. Os elementos triangulares inferiores são definidos como NA, o que indica que eles devem ser estimados.
+
+```{r econ11_2, warning=FALSE, message=FALSE }
+# Estimate structural coefficients
+a <- diag(1, 3)
+a[lower.tri(a)] <- NA
+
+svar_est_a <- SVAR(var_est, Amat = a, max.iter = 1000)
+
+svar_est_a
+```
+
+O resultado não é igual à matriz B, pois estimou-se um modelo A. Para traduzi-lo nos coeficientes estruturais do modelo B, basta obter o inverso da matriz:
+
+```{r econ11_3, warning=FALSE, message=FALSE }
+solve(svar_est_a$A)
+```
+
+Os intervalos de confiança para os coeficientes estruturais podem ser obtidos acessando diretamente o respectivo elemento em svar_est_a:
+
+```{r econ11_4, warning=FALSE, message=FALSE }
+svar_est_a$Ase
+```
+
+<br>
+
+**Modelo B**
+
+Os modelos B são estimados de maneira semelhante aos modelos A, especificando uma matriz Bmat, que contém restrições na matriz estrutural B. No exemplo a seguir, B é igual a Amat acima.
+
+```{r econ11_5, warning=FALSE, message=FALSE }
+# Create structural matrix with restrictions
+b <- diag(1, 3)
+b[lower.tri(b)] <- NA
+
+# Estimate
+svar_est_b <- SVAR(var_est, Bmat = b)
+
+# Show result
+svar_est_b
+
+# Confidence Intervals of the structural coefficients 
+svar_est_b$Bse
+```
