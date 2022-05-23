@@ -1,0 +1,335 @@
+---
+title: "Aula 12 - Econometria de Séries Temporais"
+author: "João Ricardo F. de Lima"
+date: "`r format(Sys.time(), '%d de %B de %Y.')`"
+output: 
+    html_document:
+        theme: flatly
+        number_sections: yes
+        highlight: textmate
+#        includes: 
+#          in_header: "header.html"
+        toc: yes
+        toc_float:
+          collapsed: yes
+          smooth_scroll: yes 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.width  = 10, 
+  fig.height = 7,
+  fig.align  = "center",
+  comment    = "#",
+  size       = "normalsize"
+  )
+
+#Linhas precisam de ajuste semanal: 30, 104, 201, 204
+```
+
+<br>
+
+# VEC - Vetorial Autorregressivo com correção de erro
+
+<br>
+
+Um dos pressupostos para se estimar um modelo VAR é que as variáveis sejam estacionárias. Isso significa que se essa hipótese for violada, é necessário realizar outro tipo de análise, verificando a existência de **cointegração** entre duas ou mais variáveis, isto é, se existe uma relação de longo-prazo entre elas. 
+
+Se as séries não forem estacionárias, as mesmas podem estar relacionadas ao longo do tempo. Se for esse o caso, diz-se que as séries possuem uma tendência comum, o que nos permite avaliar a relação entre elas.
+
+Sejam $Y_t$, $X_t$ e $Z_t$ três séries temporais e a seguinte relação de interesse:
+
+<br>
+
+$$
+Y_t=\alpha+\beta X_t+ \gamma Z_t + \epsilon_t
+$$  
+<br>
+
+Neste caso tem que se considerar as seguintes possibilidades:
+
+a) Se $Y_t$, $X_t$ e $Z_t$ são estacionárias, estima-se a equação acima em nível 
+
+b) Se $Y_t$, $X_t$ e $Z_t$ são não estacionárias, tem-se outras possibilidades:
+
+Se $Y_t$, $X_t$ e $Z_t$ são não estacionárias mas co-integradas, deve-se estimar um Modelo de Correçao de Erro (MCE) na forma uni ou multivariada dado por
+
+<br>
+
+$$
+\Delta Y_t=\alpha+\beta \Delta X_t+ \gamma \Delta Z_t +\lambda \hat{\epsilon}_{t-1}+u_t
+$$
+<br>
+
+em que $\hat{\epsilon}_{t-1}$ são os resíduos da equação do slide anterior.
+
+Se $Y_t$, $X_t$ e $Z_t$ são não estacionárias e não co-integradas, deve-se ajustar a equação do slide anterior em primeiras diferenças, ou seja,
+
+<br>
+
+$$
+\Delta Y_t=\alpha+\beta \Delta X_t+ \gamma \Delta Z_t + v_t
+$$
+<br>
+
+## Co-integração - Relações de Equilíbrio de Longo Prazo
+
+<br>
+
+As séries $Y_{1t}, Y_{2t}, Y_{3t}, \dots,Y_{kt}$ são co-integradas de ordem (d,b) se todas as séries forem integradas de ordem "d", I(d) e se existir uma combinação linear dessas variáveis que seja integrada de ordem (d-b), com $(0 \leq b \leq d) $.  
+
+A combinação linear é dada por
+
+<br>
+
+$$
+Z_t=a_1Y_{1t}+a_2Y_{2t}+a_3Y_{3t}+\dots+a_kY_{kt}
+$$
+
+<br>
+
+O vetor $a=[a_1 \quad a_2\quad a_3\quad \dots\quad a_k]'$ é chamado de "vetor de co-integração". Os casos de interesse para as relações econômicas são quando a combinação linear é estacionária, ou seja, I(0).
+
+Considere $Y_t \sim I(1)$, $X_t \sim I(1)$ e $Z_t \sim I(1)$ e a relação:
+
+<br>
+
+$$
+Y_t=\beta_0+\beta_1 X_t+ \beta_2 Z_t
+$$
+
+<br>
+
+esta relação estará em equilíbrio de longo prazo se $0=Y_t-\beta_0-\beta_1 X_t- \beta_2 Z_t$, sendo que para o equilíbrio existir e ter significado econômico, o resíduo deve ser estacionário.
+
+Assim, com $Y_t \sim I(1)$, $X_t \sim I(1)$ e $Z_t \sim I(1)$ e $\epsilon_t=Y_t-\beta_0-\beta_1 X_t- \beta_2 Z_t \sim I(0)$, tem-se que as três séries são co-integradas com vetor de cointegração dado por 
+
+<br>
+
+$$
+\beta=[1 \quad -\beta_0\quad -\beta_1\quad -\beta_2]'
+$$
+<br>
+
+## Vetores de Co-integração
+
+<br>
+
+Os vetores de co-integração (CI) não são únicos. Podem existir várias combinações lineares estacionárias devido a existência de vários vetores de CI. O número de vetores de CI depende do número de variáveis envolvidas. Tem-se:
+
+a) Caso de 2 variáveis: com 2 variáveis existe somente uma combinação estacionária entre as variáveis que representa uma relação de equilíbrio de longo prazo;
+
+b) Caso de k variáveis: com k variáveis existem até k-1 vetores de co-integração linearmente independentes. 
+
+<br>
+
+## Rank de Co-integração
+
+<br>
+
+O rank de CI (r) é o número de vetores de CI linearmente independentes. Para k variáveis de mesma ordem de integração e co-integradas, $1 \le r \le k-1$.
+
+<br>
+
+## Testes de Co-Integração - Caso Multivariado
+
+<br>
+
+Para se testar co-integração no caso Multivariado, suponha K variáveis todas integradas de mesma ordem I(1). Sendo as variáveis todas I(1), a existência de combinações lineares I(0) entre elas indica que estas variáveis são co-integradas.  Estas combinações lineares governam o comportamento de equilíbrio de longo prazo. Em geral, existem $r\le K-1$ combinações lineares independentes que são as relações de CI e é necessário encontrar o valor de r;  
+
+Se r=K as variáveis são I(0). Se r=0, não existe relação de longo prazo entre as variáveis. Se $1 \le r \le k-1$, existem de 1 até k-1 vetores de co-integração e é necessário definir o valor de r. 
+
+A metodologia para se determinar o número de vetores de CI e estimar as relações de CI é baseada na estimação de um **Modelo Vetorial Autorregressivo** conhecido como modelo VAR, que foi desenvolvida por Johansen.
+
+<br>
+
+### Teste de Co-Integração de Johansen
+
+<br>
+
+Considere um VAR(2) com k variáveis, todas possuindo raiz unitária:
+
+<br>
+
+$$
+Y_t=\alpha+\theta_1Y_{t-1}+\theta_2Y_{t-2}+\epsilon_t
+$$
+
+<br>
+
+É possível subtrair $Y_{t-1}$ dos dois lados nesta equação e rearranjar os termos para obter: 
+
+<br>
+
+$$
+\Delta Y_t=\alpha+(\theta_1+\theta_2-I)Y_{t-1}-\theta_2 \Delta y_{t-1}+\epsilon_t
+$$
+<br>
+
+com um pouco mais de álgebra é possível reescrever um VAR(p) com k variáveis como um VEC (VAR Reparametrizado) da forma
+
+<br>
+
+$$
+\Delta Y_t=\alpha+\Pi Y_{t-1}+ \sum_{i=1}^{p-1}\Gamma_i\Delta y_{t-i}+\epsilon_t
+$$
+
+em que
+
+$$
+\Pi=\sum_{j=1}^{p}\theta_j-I
+$$
+
+e  
+
+$$
+\Gamma_i=- \sum_{j=i+1}^{p}\theta_j
+$$
+<br>
+
+$\Pi$ é a matriz dos coeficientes das relações de cointegração; $\Gamma$ é a matriz dos coeficientes da variável $Y$ diferenciada defasadas.
+
+A diferença do VEC para o VAR é o termo de correção de erro $\Pi Y_{t-1}$. Engle e Granger (1987) mostraram que $\Pi$ tem rank r, $0 \le r <K$, em que r é o número de vetores de cointegração linearmente independentes entre os elementos do vetor $Y_t$.  Assim, não se pode simplesmente estimar um VAR em $\Delta Y_t$ quando existe relações de cointegração pois se estaria omitindo $\Pi Y_{t-1}$. Se não existem relações de cointegração entre os elementos de $Y_t$, o rank de $\Pi$ é 0 e o termo $\Pi Y_{t-1}$ desaparece.
+
+Se rank $(\Pi)=r<k$, pode-se mostrar que existem matrizes $\psi_{kxr}$ e $\beta_{kxr}$ tais que
+
+<br>
+
+$$
+\Pi_{KxK}=\psi_{kxr} \beta_{rxk}'
+$$
+
+<br>
+
+Substituindo na equação do VAR reparametrizado, obtém-se
+
+<br>
+
+$$
+\Delta Y_t=\alpha+ \psi \beta'Y_{t-1}+\sum_{i=1}^{p-1}\Gamma_i\Delta y_{t-i}+\epsilon_t
+$$
+
+<br>
+
+que é denominado de **Modelo de Correção de Erro Vetorial (VEC)**. O VEC, então, é um VAR (reparametrizado) com as restrições de co-integração entre as variáveis. 
+
+Tem-se que
+
+1) $\beta'Y_{t-1}$= são as ``r'' relações de cointegração que definem o equilíbrio de longo prazo ente as variáveis;
+
+2) $\psi$=matriz de coeficientes de ajustamento de longo prazo;
+
+3) $\Gamma_i$=matrizes de coeficientes que definem a dinâmica de curto prazo;  
+
+
+O procedimento de Johansen consiste em testar o número de raízes características diferentes de zero na matriz $\Pi$ que corresponde ao número de relações e vetores de cointegração entre as variáveis.
+
+
+São utilizados dois testes:
+
+1. **Teste do Traço**:
+
+$H_0:r \le r_0$ 
+
+$H_1:r_0<r \le k$
+
+Estatística de teste:
+
+$$
+\lambda_{traco}=-T \sum_{i=r_0+1}^{k} ln(1-\hat{\lambda_i})
+$$
+
+2. **Teste da Raiz Característica Máxima**:
+
+$H_0:r \le r_0$
+
+$H_1:r=r_0+1$
+
+Estatística de teste:
+
+$$
+\lambda_{max}=-T ln(1-\hat{\lambda_{r_0+1}})
+$$
+
+Os testes são realizados em sequencia até que a hipótese nula não seja rejeitada.
+
+<br>
+
+# Exemplo
+
+<br>
+Considere 3 processos simulados, sendo dois AR(1) e um passeio aleatório.
+
+``` {r aula12_1, warning=FALSE, message=FALSE}
+set.seed(9)
+
+e1 <- rnorm(250,0,0.5) 
+e2 <- rnorm(250,0,0.5) 
+e3 <- rnorm(250,0,0.5) 
+
+u1.ar1 <- arima.sim(model = list(ar=0.75), innov = e1, n = 250)
+u2.ar1 <- arima.sim(model = list(ar=0.3), innov = e2, n = 250)
+
+y3 <- cumsum(e3)
+y1 <- 0.8*y3 + u1.ar1
+y2 <- -0.3*y3 + u2.ar1
+
+
+y.mat <- data.frame(y1,y2,y3)
+
+# Figura 8.8 
+plot.ts(y1, lty = 1, ylim = c(-3,7), ylab = "")
+lines(y2, lty = 2)
+lines(y3, lty = 4)
+```
+<br>
+
+
+A função do R ca.jo() estima as matrizes $\alpha$ e $\beta$, além das estatísticas de teste para os dois métodos. 
+
+A estimação do VEC é feita em duas etapas, na primeira se estima, por máxima verossimilhança, as relações de cointegração, e em seguida, com mínimos quadrados, os coeficientes dos termos determinísticos e de defasagem.
+
+Nos resultados, $r=0$ equivale a hipótese de não existência de relações de cointegração, enquanto $r \leq i$ equivale à de i ou menos relações de cointegração.
+
+Abaixo, a saída do teste do máximo autovalor:
+
+
+``` {r aula12_2, warning=FALSE, message=FALSE}
+library(vars)
+vecm <- ca.jo(y.mat, type = c("eigen"), ecdet = "const")
+
+jo.results <- summary(vecm)
+jo.results
+
+vect <- ca.jo(y.mat, type = c("trace"), ecdet = "const")
+
+jo.results <- summary(vect)
+jo.results
+
+
+```
+
+Observe que as estatísticas de teste rejeitam as duas hipóteses nulas iniciais ($r=0$ e $r \leq 1$) a 1\% de significância. Como se tem três variáveis, haverá no máximo 2 vetores de cointegração.
+
+Resultado semelhante foi encontrado na estatística do traço. 
+
+Por padrão, a saída mostra tambem os vetores de cointegração normalizados para a primeira variável, uma transformação proposta por Johansen. 
+
+<br>
+
+Para se estimar os demais coeficientes do modelo se utiliza a função cajorls() com base na quantidade de relações de cointegração. 
+
+``` {r aula12_3, warning=FALSE, message=FALSE}
+
+vecm.r2 <- cajorls(vecm, r = 2)
+vecm.r2
+```
+
+A saída da função retorna não só os vetores com as relações de longo prazo (beta), assim como a matriz de coeficientes do modelo (rlm) e os termos de ajuste (ect), componentes de alpha.
+
+Na seção correspondente aos vetores de cointegração (beta), se tem duas colunas, cada uma com um vetor de cointegração. Como estão normalizados, pode-se facilmente encontrar a contrapartida com os coeficientes do processo gerador.
+
+<br>
